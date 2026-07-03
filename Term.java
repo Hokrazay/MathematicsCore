@@ -14,6 +14,7 @@ public class Term extends Utility {
         int power;
         String eqn;
         static ArrayList<Term> term = new ArrayList<>();
+        static ArrayList<Character> Operators = new ArrayList<>();
 
         Term(int coefficient, char variable, int power) {
             this.coefficient = coefficient;
@@ -24,10 +25,10 @@ public class Term extends Utility {
             this.eqn = eqn;
         }
     
-    public static void main(String[] args) {
+    public  static void main(String[] args) {
         Scanner input = new Scanner(System.in);
         
-        List<Character> Operators = new ArrayList<>();
+        
         pln("Enter the equation in the format given below : \n");
         pln("Example : x^3 + 3x^2 - 4x + 5");
         pln("Ensure that there is a space between the terms and the operators.\n");
@@ -50,11 +51,39 @@ public class Term extends Utility {
 
         }
       }
-        input.close();
-        
+
+      pln("What function do you want to perform on the equation? Enter your choice:");
+      pln("\n1. [D] Derivative\n3. [P] Partial Derivative\n4. [I] Definite Integration\n5. [N] Indefinite Integration\n6. [E] Exit");
+      char choice = input.next().charAt(0);
+      switch(choice) {
+        case 'd':
+        case 'D':
+          DifferentialCalculus();
+          break;
+        case 'p':
+        case 'P':
+          // Perform partial derivative
+          break;
+        case 'i':
+        case 'I':
+          // Perform definite integration
+          break;
+        case 'n':
+        case 'N':
+          // Perform indefinite integration
+          break;
+        case 'e':
+        case 'E':
+          pln("Exiting the program.");
+          System.exit(0);
+          
+        default:
+          pln("Invalid choice!");
+      }
+      input.close();
 
     }
-    public  void TermAssignment() {
+    public   void TermAssignment() {
     int i = 0;
     // Read coefficient
     String coeff = "";
@@ -98,4 +127,41 @@ public class Term extends Utility {
         }
 
     }
+    public static void DifferentialCalculus(){
+        //==Division Checking==
+     for(int i = 0; i < Operators.size(); i++){
+     if (Operators.get(i) == '/') {
+        
+     }else{continue;}
+    
+     }
+     for(int i = 0; i < Operators.size(); i++){
+        if (Operators.get(i) == '*') {
+            String result = "";
+            Term term1 = term.get(i);
+            Term term2 = term.get(i + 1);
+            result = term1.MultiplyTerms(term1, term2);
+            pln("The result of multiplication is: " + result);
+        } else {
+            continue;
+        }}
+    
+       
+    
     }
+    public String DivideTerms(Term term1, Term term2){
+        String result = "";
+        String diffrentiatedTerm1 = term1.DerivativeOfTerm();
+        String diffrentiatedTerm2 = term2.DerivativeOfTerm();
+        // Perform division logic here
+        return result;
+    }
+    public String MultiplyTerms(Term term1, Term term2){
+        String result = "";
+        String diffrentiatedTerm1 = term1.DerivativeOfTerm();
+        String diffrentiatedTerm2 = term2.DerivativeOfTerm();
+        // Perform multiplication logic here
+        return result;
+    }
+}
+
