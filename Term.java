@@ -1,5 +1,10 @@
 
-
+//Project Started By Saket Shrivastava on 03/07/2026
+/* 03/07/20206 - Made Structure of the Term.java file and added the TermAssignment() method to assign values to the coefficient, variable, and power of a term based on the input equation. 
+ Also added the DerivativeOfTerm() method to calculate the derivative of a term. 
+ Started to work on DifferentialCalculus() method to perform differential calculus operations on the equation. 
+ Made outlines of MultiplyTerms() and DivideTerms() methods to perform multiplication and division of terms respectively.
+*/
 import java.util.*;
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
