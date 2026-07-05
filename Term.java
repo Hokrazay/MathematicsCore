@@ -5,6 +5,53 @@
  Started to work on DifferentialCalculus() method to perform differential calculus operations on the equation. 
  Made outlines of MultiplyTerms() and DivideTerms() methods to perform multiplication and division of terms respectively.
 */
+/*  04/07/2026 - Made Division and Multiplication Functional. Added the CombineLikeTerms() method to combine like terms in the equation.
+  Equipped program to do BODMAS operations in order.
+  Equipped program to handle simplification of equations and display the steps of simplification.
+  For ex. ouput of 14x^2 + 9x^6 * 12x^2 to be :
+  Final Result: 
+  14x^2 + 9x^6 * 12x^2
+   => 14x^2 + 108x^8
+   => 28x + 864x^7
+*/
+/* 
+    05/07/2026 - Adapted the program to show d/dx(14x^2 + 9x^6 * 12x^2) => d/dx(14x^2 + 108x^8) => 28x + 864x^7 for input 14x^2 + 9x^6 * 12x^2.
+    Instead of originial 14x^2 + 9x^6 * 12x^2   => 14x^2 + 108x^8   => 28x + 864x^7
+    Therefore I made it show d/dx(..) until Differentiation is actually done Mathematically.
+    Added TrignometryForCalculus.java file to handle Trignometric functions in the equation.
+    Trignometry cannot be yet handled in Term.java file for Calculus operations but individually works as perfect Trignometry Simplifier.
+    Trignometric Identities that can be handled :
+    1. sin^2 x + cos^2 x = 1
+    2. tan^2 x - sec^2 x = 1
+    3. cot^2 x - cosec^2 x = 1
+    4. 1/sin x = csc x and vica versa.
+    5. 1/cos x = sec x and vica versa.
+    6. 1/tan x = cot x and vica versa.
+    7. cos^2 x - sin^2 x = cos 2x.
+    8. 2 * sin x * cos x = sin 2x.
+    9. tan 2x = (2*tanx) / (1 - tan^2 x)
+    10. sin -x = -sin x
+    11. cos -x = cos x
+    12. tan -x = tan x
+    13. sin (x+y) = (sin x * cos y) + (sin y * cos x)
+    14. sin (x-y) = (sin x * cos y) - (sin y * cos x)
+    15. cos (x+y) = (cos x * cos y) - (sin x * sin y)
+    16. cos (x-y) = (cos x * cos y) + (sin x * sin y)
+    Tan Functions and half angle formulas are not yet implemented in the program but will be implemented in the next work session.
+    Equipped TrignometryForCalculus.java file to handle Parantheses Priority (It will handle Functions in Parantheses first and then the rest of the equation) and BODMAS operations in the equation.
+    Made it recognize Squared Trignometric Functions like sin^2 x, cos^2 x, tan^2 x, cosec^2 x, sec^2 x, cot^2 x and handle them in the equation.
+    Made it evaluate squared expressions for example >>
+      Example 1 : Input : ((cos x * cos y) + (sin x * sin y))^2 + ((sin x * cos y) - (sin y * cos x))^2
+                  Output : Result : 
+                           ((cos x * cos y) + (sin x * sin y))^2 + ((sin x * cos y) - (sin y * cos x))^2
+                           => cos^2 (x - y) + sin^2 (x - y)
+                           => 1 
+      Example 2 : Input : (sin^2 x + cos^2 x) - sin^2 x
+                  Output : Result : 
+                             (sin^2 x + cos^2 x) - sin^2 x
+                             => 1 - sin^2 x
+                             => cos^2 x 
+*/
 import java.util.*;
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
