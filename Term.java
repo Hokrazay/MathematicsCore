@@ -4,7 +4,7 @@
  Also added the DerivativeOfTerm() method to calculate the derivative of a term. 
  Started to work on DifferentialCalculus() method to perform differential calculus operations on the equation. 
  Made outlines of MultiplyTerms() and DivideTerms() methods to perform multiplication and division of terms respectively.
-*/
+*/ 
 /*  04/07/2026 - Made Division and Multiplication Functional. Added the CombineLikeTerms() method to combine like terms in the equation.
   Equipped program to do BODMAS operations in order.
   Equipped program to handle simplification of equations and display the steps of simplification.
@@ -14,6 +14,18 @@
    => 14x^2 + 108x^8
    => 28x + 864x^7
 */
+
+/*  04/07/2026 - Made Division and Multiplication Functional. Added the CombineLikeTerms() method to combine like terms in the equation.
+  Equipped program to do BODMAS operations in order.
+  Equipped program to handle simplification of equations and display the steps of simplification.
+  For ex. ouput of 14x^2 + 9x^6 * 12x^2 to be :
+  Final Result: 
+  14x^2 + 9x^6 * 12x^2
+   => 14x^2 + 108x^8
+   => 28x + 864x^7
+*/
+
+
 /* 
     05/07/2026 - Adapted the program to show d/dx(14x^2 + 9x^6 * 12x^2) => d/dx(14x^2 + 108x^8) => 28x + 864x^7 for input 14x^2 + 9x^6 * 12x^2.
     Instead of originial 14x^2 + 9x^6 * 12x^2   => 14x^2 + 108x^8   => 28x + 864x^7
@@ -52,6 +64,11 @@
                              => 1 - sin^2 x
                              => cos^2 x 
 */
+
+
+
+
+
 import java.util.*;
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
@@ -223,12 +240,15 @@ public class Term extends Utility {
         String simplifiedExpression = FormatTermList(simplifiedTerms);
         String derivative = DerivativeOfTermList(simplifiedTerms);
 
-        finale.append(originalExpression);
+        finale.append(FormatDerivativeNotation(originalExpression));
         if (!originalExpression.equals(simplifiedExpression)) {
-            finale.append("\n=> ").append(simplifiedExpression);
+            finale.append("\n=> ").append(FormatDerivativeNotation(simplifiedExpression));
         }
         finale.append("\n=> ").append(derivative);
         
+        }
+        public static String FormatDerivativeNotation(String expression) {
+          return "d/dx(" + expression + ")";
         }
         public static ArrayList<Term> SimplifyOriginalExpression() {
           ArrayList<Term> collapsedTerms = new ArrayList<>();
@@ -522,4 +542,3 @@ public class Term extends Utility {
         */
     
 }
-
