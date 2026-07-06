@@ -89,5 +89,11 @@
    Added option for Differentiation, Partial Differentiation, Integration in Term.java.
    Added Trignometric Functions Integrals to Integration.java
    Completed Indefinite Integration
+   Started work on Chain Rule [Not complete as of 06/07/2026]
+   Chain rule bugy, debugging in progress.
+   Chain Rule works for Differentiation. [Debugged]
+   Substitution (Reverse Chain rule) done in Integration.
+   Completed Chain Rule Basics [Enough for Differentiation and Integration at this level of Program] at 20:25 hrs.
+   Chain Rule completely Debugged. :)
 
    */

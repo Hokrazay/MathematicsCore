@@ -1091,7 +1091,7 @@ public class TrignometryForCalculus {
     }
 
     private static List<Token> tokenize(String input) {
-        String value = input.toLowerCase(Locale.ROOT).replaceAll("\\s+", "");
+        String value = ChainRule.normalizeSuperscripts(input).toLowerCase(Locale.ROOT).replaceAll("\\s+", "");
         List<Token> tokens = new ArrayList<>();
 
         for (int i = 0; i < value.length();) {

@@ -1,12 +1,4 @@
 
-
-
-
-/*  
-*/
-
-
-
 import java.util.*;
 
 
@@ -43,7 +35,7 @@ public class Term extends Utility {
         finale.setLength(0);
 
         pln("Enter the equation in the format given below : \n");
-        pln("Example : x^3 + 3x^2 - 4x + 5");
+        pln("Example : 2 * sin x * cos x + x^3 + 3x^2 - 4x + 5");
         pln("Ensure that there is a space between the terms and the operators.\n");
         pln("Ensure there is only ONE VARIABLE and only ONE OF EACH OPERATOR in the equation.\n");
         pln("Note :\n-> 1 is represented as 1x^0 \n-> 0 is represented as 0x^0\n-> x is represented as 1x^1");
@@ -60,7 +52,12 @@ public class Term extends Utility {
         switch(choice) {
             case 'd':
             case 'D':
-              if (isTrigonometric(equation)) {
+              if (ChainRule.isChainRuleCandidate(equation)) {
+                String chainRuleResult = ChainRule.differentiateWithSteps(equation);
+                finale.setLength(0);
+                finale.append(chainRuleResult);
+                pln("Final Results ->\n" + finale.toString());
+              } else if (isTrigonometric(equation)) {
                 processTrigonometricExpression(equation);
               } else {
                 parsePolynomialEquation(equation);
@@ -83,7 +80,7 @@ public class Term extends Utility {
     }
 
     public static void parsePolynomialEquation(String equation) {
-        String[] tokens = equation.split(" ");
+        String[] tokens = ChainRule.normalizeSuperscripts(equation).split(" ");
 
         for(String token : tokens) {
             if(token.isEmpty()) {
@@ -109,10 +106,44 @@ public class Term extends Utility {
                lower.contains("cosec");
     }
 
+    public static boolean isCompositeFunction(String expression) {
+        return ChainRule.isCompositeFunction(expression);
+    }
+
+    public static String getOuterFunction(String expression) {
+        return ChainRule.getOuterFunction(expression);
+    }
+
+    public static String getInnerExpression(String expression) {
+        return ChainRule.getInnerExpression(expression);
+    }
+
+    public static String differentiateInnerExpression(String expression) {
+        return ChainRule.differentiateInnerExpression(expression);
+    }
+
+    public static String integrateInnerExpression(String expression) {
+        return ChainRule.integrateInnerExpression(expression);
+    }
+
     // Processes an expression containing trigonometric functions
     public static void processTrigonometricExpression(String equation) {
+        // If expression is a chain-rule candidate (nested functions, sqrt/ln/exp, trig powers with composite args, etc.),
+        // route differentiation through ChainRule AST engine to ensure correct unlimited nesting & sign handling.
+        if (ChainRule.isChainRuleCandidate(equation)) {
+            String chainRuleResult = ChainRule.differentiateWithSteps(equation);
+            if (chainRuleResult != null && !chainRuleResult.equals("Invalid expression.")) {
+                finale.setLength(0);
+                finale.append(chainRuleResult);
+                pln("Final Results ->\n" + finale.toString());
+                return;
+            }
+            // fallback to existing logic
+        }
+
         // Step 1: Use TrignometryForCalculus to simplify the trig expression
         String simplifiedTrig = TrignometryForCalculus.simplifyEquationRaw(equation);
+
 
         // Step 2: Display the differentiation steps
         finale.setLength(0);
@@ -758,24 +789,36 @@ public class Term extends Utility {
         }
         public static boolean isTrigFunctionNameAt(String expression, int index) {
           return expression.startsWith("cosec", index) ||
+                 expression.startsWith("sqrt", index) ||
                  expression.startsWith("csc", index) ||
                  expression.startsWith("sin", index) ||
                  expression.startsWith("cos", index) ||
                  expression.startsWith("tan", index) ||
                  expression.startsWith("cot", index) ||
-                 expression.startsWith("sec", index);
+                 expression.startsWith("sec", index) ||
+                 expression.startsWith("exp", index) ||
+                 expression.startsWith("ln", index) ||
+                 expression.startsWith("e^", index);
         }
         public static int trigFunctionNameLength(String expression, int index) {
           if(expression.startsWith("cosec", index)) {
               return 5;
+          }
+          if(expression.startsWith("sqrt", index)) {
+              return 4;
           }
           if(expression.startsWith("csc", index) ||
              expression.startsWith("sin", index) ||
              expression.startsWith("cos", index) ||
              expression.startsWith("tan", index) ||
              expression.startsWith("cot", index) ||
-             expression.startsWith("sec", index)) {
+             expression.startsWith("sec", index) ||
+             expression.startsWith("exp", index)) {
               return 3;
+          }
+          if(expression.startsWith("ln", index) ||
+             expression.startsWith("e^", index)) {
+              return 2;
           }
           return 1;
         }

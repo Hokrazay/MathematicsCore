@@ -37,11 +37,19 @@ public class Integration extends Utility {
     }
 
     public static String integrateIndefinitely(String equation) {
+        // Try reverse chain-rule first. Quotient cases such as 2x/(x^2+1)
+        // do not always contain a function name, so they still need this pass.
+        String chainRuleIntegral = ChainRule.integrateWithSteps(equation);
+        if (chainRuleIntegral != null && !chainRuleIntegral.equals("Invalid expression.")) {
+            return chainRuleIntegral;
+        }
+
         if (Term.isTrigonometric(equation)) {
             return integrateTrigonometricExpression(equation);
         }
 
         ParsedExpression parsedExpression = parseExpression(equation);
+
         char variable = findVariable(parsedExpression.terms, equation);
         String originalExpression = equation.trim();
         ArrayList<Term> simplifiedTerms = simplify(parsedExpression.terms, parsedExpression.operators);
@@ -72,8 +80,8 @@ public class Integration extends Utility {
         String afterBodmas = Term.rebuildWithTrigTerms(trigTerms, trigSigns, polyBodmasResult);
 
         ArrayList<String> integratedParts = new ArrayList<>();
-        addIntegratedTrigParts(trigTerms, trigSigns, integratedParts);
         addIntegratedPolynomialParts(polyBodmasResult, variable, integratedParts);
+        addIntegratedTrigParts(trigTerms, trigSigns, integratedParts, variable);
 
         String integratedExpression = simplifyIntegratedResult(joinSignedParts(integratedParts));
 
@@ -123,7 +131,7 @@ public class Integration extends Utility {
 
     private static ParsedExpression parseExpression(String equation) {
         ParsedExpression parsedExpression = new ParsedExpression();
-        String[] tokens = equation.split(" ");
+        String[] tokens = ChainRule.normalizeSuperscripts(equation).split(" ");
 
         for (String token : tokens) {
             if (token.isEmpty()) {
@@ -304,11 +312,11 @@ public class Integration extends Utility {
         }
     }
 
-    private static void addIntegratedTrigParts(List<String> trigTerms, List<Integer> trigSigns, ArrayList<String> integratedParts) {
+    private static void addIntegratedTrigParts(List<String> trigTerms, List<Integer> trigSigns, ArrayList<String> integratedParts, char variable) {
         for (int i = 0; i < trigTerms.size(); i++) {
             String integratedTerm = integrateTrigTerm(trigTerms.get(i));
             if (integratedTerm.equals("0")) {
-                continue;
+                integratedTerm = "(" + trigTerms.get(i) + ") d" + variable;
             }
             if (trigSigns.get(i) < 0) {
                 integratedTerm = negateIntegratedTerm(integratedTerm);
@@ -340,6 +348,13 @@ public class Integration extends Utility {
                 || lower.startsWith("sec ") || lower.startsWith("cot ")) {
             function = lower.substring(0, 3);
             argument = term.substring(4).trim();
+        } else if (lower.startsWith("cosec(") && term.endsWith(")")) {
+            function = "cosec";
+            argument = term.substring(6, term.length() - 1).trim();
+        } else if ((lower.startsWith("sin(") || lower.startsWith("cos(") || lower.startsWith("tan(")
+                || lower.startsWith("sec(") || lower.startsWith("cot(")) && term.endsWith(")")) {
+            function = lower.substring(0, 3);
+            argument = term.substring(4, term.length() - 1).trim();
         } else {
             return "0";
         }
