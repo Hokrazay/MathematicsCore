@@ -47,6 +47,33 @@ public class TrignometryForCalculus {
         return output.toString();
     }
 
+    public static String simplifyEquationRaw(String equation) {
+        if (equation == null || equation.trim().isEmpty()) {
+            return "";
+        }
+
+        Parser parser = new Parser(equation);
+        Expr expression = parser.parse();
+        List<String> steps = new ArrayList<>();
+        steps.add(equation.trim());
+
+        boolean changed;
+        do {
+            SimplifyResult result = simplifyOnce(expression);
+            changed = result.changed;
+            expression = result.expression;
+            if (changed) {
+                String formatted = expression.format();
+                if (!steps.get(steps.size() - 1).equals(formatted)) {
+                    steps.add(formatted);
+                }
+            }
+        } while (changed);
+
+        // Return just the final simplified expression
+        return steps.get(steps.size() - 1);
+    }
+
     private static List<String> compressDisplaySteps(List<String> steps) {
         if (steps.size() <= 3) {
             return steps;
@@ -214,6 +241,13 @@ public class TrignometryForCalculus {
     }
 
     private static SignedTerm signedIdentity(SignedTerm first, SignedTerm second) {
+        if (first.expression.equals(second.expression)) {
+            if (first.sign != second.sign) {
+                return new SignedTerm(1, num(0));
+            }
+            return new SignedTerm(first.sign, mul(num(2), first.expression));
+        }
+
         if (sameTrigPower(first.expression, second.expression, "sin", "cos", 2)
             || sameTrigPower(first.expression, second.expression, "cos", "sin", 2)) {
             if (first.sign == second.sign) {
@@ -648,6 +682,50 @@ public class TrignometryForCalculus {
         }
     }
 
+    private static class Monomial implements Expr {
+        final int coefficient;
+        final String variable;
+        final int power;
+
+        Monomial(int coefficient, String variable, int power) {
+            this.coefficient = coefficient;
+            this.variable = variable;
+            this.power = power;
+        }
+
+        public SimplifyResult simplifyChildren() {
+            return unchanged(this);
+        }
+
+        public String format() {
+            if (power == 0) {
+                return String.valueOf(coefficient);
+            }
+            if (power == 1) {
+                return coefficient + variable;
+            }
+            return coefficient + variable + "^" + power;
+        }
+
+        public int precedence() {
+            return 5;
+        }
+
+        public boolean equals(Object other) {
+            if (!(other instanceof Monomial)) {
+                return false;
+            }
+            Monomial monomial = (Monomial) other;
+            return coefficient == monomial.coefficient
+                && variable.equals(monomial.variable)
+                && power == monomial.power;
+        }
+
+        public int hashCode() {
+            return Objects.hash(coefficient, variable, power);
+        }
+    }
+
     private static class UnaryMinus implements Expr {
         final Expr inner;
 
@@ -927,11 +1005,16 @@ public class TrignometryForCalculus {
             }
             if (checkType("NUMBER")) {
                 Token number = advance();
-                Expr expression = new NumberExpr(Integer.parseInt(number.text));
+                int coefficient = Integer.parseInt(number.text);
                 if (checkType("NAME") && isVariable(peek().text)) {
-                    expression = new Binary("*", expression, new Symbol(advance().text));
+                    String variable = advance().text;
+                    int power = 1;
+                    if (match("^")) {
+                        power = Integer.parseInt(consumeType("NUMBER", "Expected variable power").text);
+                    }
+                    return new Monomial(coefficient, variable, power);
                 }
-                return expression;
+                return new NumberExpr(coefficient);
             }
             if (checkType("NAME")) {
                 Token name = advance();

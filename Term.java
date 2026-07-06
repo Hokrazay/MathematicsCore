@@ -1,83 +1,19 @@
-
 //Project Started By Saket Shrivastava on 03/07/2026
-/* 03/07/20206 - Made Structure of the Term.java file and added the TermAssignment() method to assign values to the coefficient, variable, and power of a term based on the input equation. 
- Also added the DerivativeOfTerm() method to calculate the derivative of a term. 
- Started to work on DifferentialCalculus() method to perform differential calculus operations on the equation. 
- Made outlines of MultiplyTerms() and DivideTerms() methods to perform multiplication and division of terms respectively.
-*/ 
-/*  04/07/2026 - Made Division and Multiplication Functional. Added the CombineLikeTerms() method to combine like terms in the equation.
-  Equipped program to do BODMAS operations in order.
-  Equipped program to handle simplification of equations and display the steps of simplification.
-  For ex. ouput of 14x^2 + 9x^6 * 12x^2 to be :
-  Final Result: 
-  14x^2 + 9x^6 * 12x^2
-   => 14x^2 + 108x^8
-   => 28x + 864x^7
+
+
+
+/*  
 */
-
-/*  04/07/2026 - Made Division and Multiplication Functional. Added the CombineLikeTerms() method to combine like terms in the equation.
-  Equipped program to do BODMAS operations in order.
-  Equipped program to handle simplification of equations and display the steps of simplification.
-  For ex. ouput of 14x^2 + 9x^6 * 12x^2 to be :
-  Final Result: 
-  14x^2 + 9x^6 * 12x^2
-   => 14x^2 + 108x^8
-   => 28x + 864x^7
-*/
-
-
-/* 
-    05/07/2026 - Adapted the program to show d/dx(14x^2 + 9x^6 * 12x^2) => d/dx(14x^2 + 108x^8) => 28x + 864x^7 for input 14x^2 + 9x^6 * 12x^2.
-    Instead of originial 14x^2 + 9x^6 * 12x^2   => 14x^2 + 108x^8   => 28x + 864x^7
-    Therefore I made it show d/dx(..) until Differentiation is actually done Mathematically.
-    Added TrignometryForCalculus.java file to handle Trignometric functions in the equation.
-    Trignometry cannot be yet handled in Term.java file for Calculus operations but individually works as perfect Trignometry Simplifier.
-    Trignometric Identities that can be handled :
-    1. sin^2 x + cos^2 x = 1
-    2. tan^2 x - sec^2 x = 1
-    3. cot^2 x - cosec^2 x = 1
-    4. 1/sin x = csc x and vica versa.
-    5. 1/cos x = sec x and vica versa.
-    6. 1/tan x = cot x and vica versa.
-    7. cos^2 x - sin^2 x = cos 2x.
-    8. 2 * sin x * cos x = sin 2x.
-    9. tan 2x = (2*tanx) / (1 - tan^2 x)
-    10. sin -x = -sin x
-    11. cos -x = cos x
-    12. tan -x = tan x
-    13. sin (x+y) = (sin x * cos y) + (sin y * cos x)
-    14. sin (x-y) = (sin x * cos y) - (sin y * cos x)
-    15. cos (x+y) = (cos x * cos y) - (sin x * sin y)
-    16. cos (x-y) = (cos x * cos y) + (sin x * sin y)
-    Tan Functions and half angle formulas are not yet implemented in the program but will be implemented in the next work session.
-    Equipped TrignometryForCalculus.java file to handle Parantheses Priority (It will handle Functions in Parantheses first and then the rest of the equation) and BODMAS operations in the equation.
-    Made it recognize Squared Trignometric Functions like sin^2 x, cos^2 x, tan^2 x, cosec^2 x, sec^2 x, cot^2 x and handle them in the equation.
-    Made it evaluate squared expressions for example >>
-      Example 1 : Input : ((cos x * cos y) + (sin x * sin y))^2 + ((sin x * cos y) - (sin y * cos x))^2
-                  Output : Result : 
-                           ((cos x * cos y) + (sin x * sin y))^2 + ((sin x * cos y) - (sin y * cos x))^2
-                           => cos^2 (x - y) + sin^2 (x - y)
-                           => 1 
-      Example 2 : Input : (sin^2 x + cos^2 x) - sin^2 x
-                  Output : Result : 
-                             (sin^2 x + cos^2 x) - sin^2 x
-                             => 1 - sin^2 x
-                             => cos^2 x 
-*/
-
-
 
 
 
 import java.util.*;
-import net.objecthunter.exp4j.Expression;
-import net.objecthunter.exp4j.ExpressionBuilder;
 
 
 
 public class Term extends Utility {
 
-    
+
         int coefficient;
         char variable;
         int power;
@@ -89,76 +25,624 @@ public class Term extends Utility {
         Term(int coefficient, char variable, int power) {
             this.coefficient = coefficient;
             this.variable = variable;
-            this.power = power; 
+            this.power = power;
             this.eqn = coefficient + String.valueOf(variable) + "^" + power;
         }
         Term(String eqn) {
             this.eqn = eqn;
         }
-    
+
     public  static void main(String[] args) {
         Scanner input = new Scanner(System.in);
-        
-        
+
+
         pln("Enter the equation in the format given below : \n");
         pln("Example : x^3 + 3x^2 - 4x + 5");
         pln("Ensure that there is a space between the terms and the operators.\n");
         pln("Ensure there is only ONE VARIABLE and only ONE OF EACH OPERATOR in the equation.\n");
         pln("Note :\n-> 1 is represented as 1x^0 \n-> 0 is represented as 0x^0\n-> x is represented as 1x^1");
         String equation = input.nextLine();
-        String[] tokens = equation.split(" ");
 
-        for(String token : tokens) {
-         if(token.isEmpty()) {
-          continue;
-         }
+        // Check if the expression contains trigonometric functions
+        boolean hasTrig = isTrigonometric(equation);
 
-         if(token.equals("+") || token.equals("-") ||
-         token.equals("*") || token.equals("/")) {
+        if (hasTrig) {
+            // For trigonometric expressions, use TrignometryForCalculus to simplify the trig part
+            // Then process with the existing BODMAS + differentiation pipeline
+            processTrigonometricExpression(equation);
+        } else {
+            String[] tokens = equation.split(" ");
 
-         Operators.add(token.charAt(0));
+            for(String token : tokens) {
+             if(token.isEmpty()) {
+              continue;
+             }
 
-         } else {     
+             if(token.equals("+") || token.equals("-") ||
+             token.equals("*") || token.equals("/")) {
 
-         Term terms = new Term(token);
-         term.add(terms);
-         term.get(term.size() - 1).TermAssignment();
+             Operators.add(token.charAt(0));
 
+             } else {
+
+             Term terms = new Term(token);
+             term.add(terms);
+             term.get(term.size() - 1).TermAssignment();
+
+            }
+          }
+
+          pln("What function do you want to perform on the equation? Enter your choice:");
+          pln("\n1. [D] Derivative\n3. [P] Partial Derivative\n4. [I] Definite Integration\n5. [N] Indefinite Integration\n6. [E] Exit");
+          char choice = input.next().charAt(0);
+          switch(choice) {
+            case 'd':
+            case 'D':
+              DifferentialCalculus();
+              break;
+            case 'p':
+            case 'P':
+              // Perform partial derivative
+              break;
+            case 'i':
+            case 'I':
+              // Perform definite integration
+              break;
+            case 'n':
+            case 'N':
+              // Perform indefinite integration
+              break;
+            case 'e':
+            case 'E':
+              pln("Exiting the program.");
+              System.exit(0);
+
+            default:
+              pln("Invalid choice!");
+          }
+          input.close();
+          pln("Final Result: \n" + finale.toString());
         }
-      }
-
-      pln("What function do you want to perform on the equation? Enter your choice:");
-      pln("\n1. [D] Derivative\n3. [P] Partial Derivative\n4. [I] Definite Integration\n5. [N] Indefinite Integration\n6. [E] Exit");
-      char choice = input.next().charAt(0);
-      switch(choice) {
-        case 'd':
-        case 'D':
-          DifferentialCalculus();
-          break;
-        case 'p':
-        case 'P':
-          // Perform partial derivative
-          break;
-        case 'i':
-        case 'I':
-          // Perform definite integration
-          break;
-        case 'n':
-        case 'N':
-          // Perform indefinite integration
-          break;
-        case 'e':
-        case 'E':
-          pln("Exiting the program.");
-          System.exit(0);
-          
-        default:
-          pln("Invalid choice!");
-      }
-      input.close();
-      pln("Final Result: \n" + finale.toString());
 
     }
+
+    // Detects if an expression contains trigonometric functions
+    public static boolean isTrigonometric(String expression) {
+        String lower = expression.toLowerCase();
+        return lower.contains("sin") || lower.contains("cos") || lower.contains("tan") ||
+               lower.contains("cot") || lower.contains("sec") || lower.contains("csc") ||
+               lower.contains("cosec");
+    }
+
+    // Processes an expression containing trigonometric functions
+    public static void processTrigonometricExpression(String equation) {
+        // Step 1: Use TrignometryForCalculus to simplify the trig expression
+        String simplifiedTrig = TrignometryForCalculus.simplifyEquationRaw(equation);
+
+        // Step 2: Display the differentiation steps
+        finale.setLength(0);
+        finale.append(FormatDerivativeNotation(equation));
+
+        // Show the simplified expression in derivative notation if it changed
+        if (!simplifiedTrig.equals(equation)) {
+            finale.append("\n=> ").append(FormatDerivativeNotation(simplifiedTrig));
+        }
+
+        // Step 3: Parse the simplified expression into trig terms and polynomial terms
+        List<String> trigTerms = new ArrayList<>();
+        List<Integer> trigSigns = new ArrayList<>();
+        List<String> polyTokens = new ArrayList<>();
+        List<String> polyOps = new ArrayList<>();
+
+        parseTrigAndPolyParts(simplifiedTrig, trigTerms, trigSigns, polyTokens, polyOps);
+
+        // Step 4: Apply BODMAS to polynomial part
+        String polyBodmasResult = applyBODMAS(polyTokens, polyOps);
+
+        // Step 5: Show BODMAS simplification step if polynomial part changed
+        String afterBodmas = rebuildWithTrigTerms(trigTerms, trigSigns, polyBodmasResult);
+        if (!afterBodmas.equals(simplifiedTrig)) {
+            finale.append("\n=> ").append(FormatDerivativeNotation(afterBodmas));
+        }
+
+        // Step 6: Compute derivatives
+        String trigDerivative = computeTrigDerivatives(trigTerms, trigSigns);
+        String polyDerivative = computePolyDerivative(polyBodmasResult);
+
+        // Step 7: Combine and display final result
+        String finalDerivative = combineDerivativeResults(trigDerivative, polyDerivative);
+        finale.append("\n=> ").append(finalDerivative);
+
+        pln("Final Result: \n" + finale.toString());
+    }
+
+    static class SignedExpression {
+        int sign;
+        String expression;
+
+        SignedExpression(int sign, String expression) {
+            this.sign = sign;
+            this.expression = expression.trim();
+        }
+    }
+
+    // Parses the simplified expression into trig terms and polynomial tokens
+    public static void parseTrigAndPolyParts(String expression, List<String> trigTerms,
+                                               List<Integer> trigSigns, List<String> polyTokens,
+                                               List<String> polyOps) {
+        List<SignedExpression> additiveParts = splitTopLevelAdditiveTerms(expression);
+
+        for (SignedExpression part : additiveParts) {
+            String currentExpression = trimOuterParentheses(part.expression);
+
+            if (isTrigonometric(currentExpression)) {
+                trigTerms.add(currentExpression);
+                trigSigns.add(part.sign);
+            } else {
+                appendPolynomialPart(currentExpression, part.sign, polyTokens, polyOps);
+            }
+        }
+    }
+
+    public static List<SignedExpression> splitTopLevelAdditiveTerms(String expression) {
+        List<SignedExpression> parts = new ArrayList<>();
+        int depth = 0;
+        int sign = 1;
+        int start = 0;
+
+        for (int i = 0; i < expression.length(); i++) {
+            char current = expression.charAt(i);
+            if (current == '(') {
+                depth++;
+            } else if (current == ')') {
+                depth--;
+            } else if (depth == 0 && (current == '+' || current == '-') && isBinaryAdditiveOperator(expression, i)) {
+                String termText = expression.substring(start, i).trim();
+                if (!termText.isEmpty()) {
+                    parts.add(new SignedExpression(sign, termText));
+                }
+                sign = current == '-' ? -1 : 1;
+                start = i + 1;
+            }
+        }
+
+        String termText = expression.substring(start).trim();
+        if (!termText.isEmpty()) {
+            parts.add(new SignedExpression(sign, termText));
+        }
+        return parts;
+    }
+
+    public static boolean isBinaryAdditiveOperator(String expression, int index) {
+        int previous = index - 1;
+        while (previous >= 0 && Character.isWhitespace(expression.charAt(previous))) {
+            previous--;
+        }
+        if (previous < 0) {
+            return false;
+        }
+        char previousChar = expression.charAt(previous);
+        return previousChar != '+' && previousChar != '-' && previousChar != '*' && previousChar != '/' && previousChar != '^' && previousChar != '(';
+    }
+
+    public static void appendPolynomialPart(String expression, int sign, List<String> polyTokens, List<String> polyOps) {
+        List<String> localTokens = new ArrayList<>();
+        List<String> localOps = new ArrayList<>();
+        splitTopLevelMultiplyDivide(expression, localTokens, localOps);
+
+        if (localTokens.isEmpty()) {
+            return;
+        }
+
+        if (polyTokens.isEmpty()) {
+            String firstToken = localTokens.get(0);
+            polyTokens.add(sign < 0 ? "-" + firstToken : firstToken);
+        } else {
+            polyOps.add(sign < 0 ? "-" : "+");
+            polyTokens.add(localTokens.get(0));
+        }
+
+        for (int i = 0; i < localOps.size() && i + 1 < localTokens.size(); i++) {
+            polyOps.add(localOps.get(i));
+            polyTokens.add(localTokens.get(i + 1));
+        }
+    }
+
+    public static void splitTopLevelMultiplyDivide(String expression, List<String> tokens, List<String> ops) {
+        int depth = 0;
+        int start = 0;
+
+        for (int i = 0; i < expression.length(); i++) {
+            char current = expression.charAt(i);
+            if (current == '(') {
+                depth++;
+            } else if (current == ')') {
+                depth--;
+            } else if (depth == 0 && (current == '*' || current == '/')) {
+                String token = trimOuterParentheses(expression.substring(start, i).trim());
+                if (!token.isEmpty()) {
+                    tokens.add(token);
+                    ops.add(String.valueOf(current));
+                }
+                start = i + 1;
+            }
+        }
+
+        String token = trimOuterParentheses(expression.substring(start).trim());
+        if (!token.isEmpty()) {
+            tokens.add(token);
+        }
+    }
+
+    public static String trimOuterParentheses(String expression) {
+        String result = expression.trim();
+        while (result.startsWith("(") && result.endsWith(")") && wrapsWholeExpression(result)) {
+            result = result.substring(1, result.length() - 1).trim();
+        }
+        return result;
+    }
+
+    public static boolean wrapsWholeExpression(String expression) {
+        int depth = 0;
+        for (int i = 0; i < expression.length(); i++) {
+            char current = expression.charAt(i);
+            if (current == '(') {
+                depth++;
+            } else if (current == ')') {
+                depth--;
+                if (depth == 0 && i < expression.length() - 1) {
+                    return false;
+                }
+            }
+        }
+        return depth == 0;
+    }
+
+    // Checks if a token is a trig function name
+    public static boolean isTrigFunction(String token) {
+        String t = token.toLowerCase();
+        return t.equals("sin") || t.equals("cos") || t.equals("tan") ||
+               t.equals("cot") || t.equals("sec") || t.equals("csc") ||
+               t.equals("cosec");
+    }
+
+    // Checks if a token looks like a trig function (including with power notation)
+    public static boolean isTrigToken(String token) {
+        String t = token.toLowerCase();
+        // Check for sin^2, cos^2, etc.
+        if (t.contains("^")) {
+            String base = t.split("\\^")[0];
+            return base.equals("sin") || base.equals("cos") || base.equals("tan") ||
+                   base.equals("cot") || base.equals("sec") || base.equals("csc") ||
+                   base.equals("cosec");
+        }
+        return isTrigFunction(t);
+    }
+
+    // Checks if a variable token follows a trig function (to avoid double-counting)
+    public static boolean isSimpleVariableAfterTrig(String[] tokens, int index) {
+        if (index == 0) return false;
+        if (isTrigToken(tokens[index - 1])) {
+            String current = tokens[index].toLowerCase();
+            return current.equals("x") || current.equals("y") || current.length() == 1;
+        }
+        return false;
+    }
+
+    // Applies BODMAS to polynomial tokens (multiply/divide first, then add/subtract)
+    public static String applyBODMAS(List<String> polyTokens, List<String> polyOps) {
+        if (polyTokens.isEmpty()) {
+            return "0";
+        }
+
+        // First pass: handle * and /
+        ArrayList<Term> terms = new ArrayList<>();
+        ArrayList<Character> ops = new ArrayList<>();
+
+        // Parse all tokens into Term objects
+        for (String token : polyTokens) {
+            Term t = new Term(token);
+            t.TermAssignment();
+            terms.add(t);
+        }
+
+        // Build operators list from polyOps, but skip the first operator if it's a sign
+        // polyOps contains operators between terms
+        for (String op : polyOps) {
+            if (op.equals("+") || op.equals("-") || op.equals("*") || op.equals("/")) {
+                ops.add(op.charAt(0));
+            }
+        }
+
+        if (terms.isEmpty()) return "0";
+
+        // Apply BODMAS: * and / first
+        ArrayList<Term> collapsedTerms = new ArrayList<>();
+        ArrayList<Character> collapsedOperators = new ArrayList<>();
+        Term current = terms.get(0);
+
+        for (int i = 0; i < ops.size() && i + 1 < terms.size(); i++) {
+            char operator = ops.get(i);
+            Term nextTerm = terms.get(i + 1);
+
+            if (operator == '*') {
+                current = MultiplyTerms(current, nextTerm);
+            } else if (operator == '/') {
+                current = DivideTerms(current, nextTerm);
+            } else {
+                collapsedTerms.add(current);
+                collapsedOperators.add(operator);
+                current = nextTerm;
+            }
+        }
+        collapsedTerms.add(current);
+
+        // Combine like terms
+        ArrayList<Term> result = CombineLikeTerms(collapsedTerms, collapsedOperators);
+        return FormatTermList(result);
+    }
+
+    // Computes derivative of polynomial expression
+    public static String computePolyDerivative(String polyStr) {
+        if (polyStr.equals("0") || polyStr.isEmpty()) {
+            return "0";
+        }
+
+        // Parse the polynomial string into terms
+        String[] tokens = polyStr.split(" ");
+        ArrayList<Term> polyTerms = new ArrayList<>();
+        ArrayList<Character> polyOps = new ArrayList<>();
+
+        for (int i = 0; i < tokens.length; i++) {
+            String token = tokens[i].trim();
+            if (token.isEmpty()) continue;
+
+            if (token.equals("+") || token.equals("-")) {
+                polyOps.add(token.charAt(0));
+            } else {
+                Term t = new Term(token);
+                t.TermAssignment();
+                polyTerms.add(t);
+            }
+        }
+
+        if (polyTerms.isEmpty()) return "0";
+
+        // Differentiate each term
+        ArrayList<Term> derivativeTerms = new ArrayList<>();
+        for (Term t : polyTerms) {
+            Term dt = TermFromString(t.DerivativeOfTerm());
+            derivativeTerms.add(dt);
+        }
+
+        return FormatTermList(CombineLikeTerms(derivativeTerms, new ArrayList<Character>()));
+    }
+
+    // Rebuilds expression string combining trig terms and polynomial terms
+    public static String rebuildWithTrigTerms(List<String> trigTerms, List<Integer> trigSigns, String polyStr) {
+        StringBuilder result = new StringBuilder();
+        boolean first = true;
+
+        // Add trig terms
+        for (int i = 0; i < trigTerms.size(); i++) {
+            if (first) {
+                if (trigSigns.get(i) < 0) {
+                    result.append("-");
+                }
+                result.append(trigTerms.get(i));
+                first = false;
+            } else {
+                if (trigSigns.get(i) < 0) {
+                    result.append(" - ").append(trigTerms.get(i));
+                } else {
+                    result.append(" + ").append(trigTerms.get(i));
+                }
+            }
+        }
+
+        // Add polynomial part
+        if (!polyStr.isEmpty() && !polyStr.equals("0")) {
+            if (!first) {
+                if (polyStr.startsWith("-")) {
+                    result.append(" - ").append(polyStr.substring(1).trim());
+                } else {
+                    result.append(" + ").append(polyStr);
+                }
+            } else {
+                result.append(polyStr);
+            }
+        }
+
+        return result.toString();
+    }
+
+    // Computes derivatives of trigonometric terms
+    public static String computeTrigDerivatives(List<String> trigTerms, List<Integer> trigSigns) {
+        List<String> derivativeTerms = new ArrayList<>();
+
+        for (int i = 0; i < trigTerms.size(); i++) {
+            String trigTerm = trigTerms.get(i);
+            int sign = trigSigns.get(i);
+            String derivative = derivativeOfTrigTerm(trigTerm);
+
+            if (derivative.equals("0")) continue;
+
+            // Apply sign
+            if (sign < 0) {
+                if (derivative.startsWith("-")) {
+                    derivative = derivative.substring(1); // -(-sin x) = sin x
+                } else {
+                    derivative = "-" + derivative;
+                }
+            }
+
+            derivativeTerms.add(derivative);
+        }
+
+        if (derivativeTerms.isEmpty()) {
+            return "0";
+        }
+
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < derivativeTerms.size(); i++) {
+            String term = derivativeTerms.get(i);
+            if (i == 0) {
+                result.append(term);
+            } else {
+                if (term.startsWith("-")) {
+                    result.append(" - ").append(term.substring(1));
+                } else {
+                    result.append(" + ").append(term);
+                }
+            }
+        }
+
+        return result.toString();
+    }
+
+    // Computes the derivative of a single trigonometric term
+    public static String derivativeOfTrigTerm(String trigTerm) {
+        // Parse the trig term: e.g., "sin x", "sin^2 x", "cos x", "cos^2 x"
+        String function = "";
+        int power = 1;
+        String argument = "x";
+
+        String lower = trigTerm.toLowerCase().trim();
+
+        // Extract function name
+        if (lower.startsWith("sin^")) {
+            function = "sin";
+            String rest = lower.substring(4); // skip "sin^"
+            int powEnd = 0;
+            while (powEnd < rest.length() && Character.isDigit(rest.charAt(powEnd))) {
+                powEnd++;
+            }
+            power = Integer.parseInt(rest.substring(0, powEnd));
+            argument = rest.substring(powEnd).trim();
+        } else if (lower.startsWith("cos^")) {
+            function = "cos";
+            String rest = lower.substring(4);
+            int powEnd = 0;
+            while (powEnd < rest.length() && Character.isDigit(rest.charAt(powEnd))) {
+                powEnd++;
+            }
+            power = Integer.parseInt(rest.substring(0, powEnd));
+            argument = rest.substring(powEnd).trim();
+        } else if (lower.startsWith("tan^")) {
+            function = "tan";
+            String rest = lower.substring(4);
+            int powEnd = 0;
+            while (powEnd < rest.length() && Character.isDigit(rest.charAt(powEnd))) {
+                powEnd++;
+            }
+            power = Integer.parseInt(rest.substring(0, powEnd));
+            argument = rest.substring(powEnd).trim();
+        } else if (lower.startsWith("cot^")) {
+            function = "cot";
+            String rest = lower.substring(4);
+            int powEnd = 0;
+            while (powEnd < rest.length() && Character.isDigit(rest.charAt(powEnd))) {
+                powEnd++;
+            }
+            power = Integer.parseInt(rest.substring(0, powEnd));
+            argument = rest.substring(powEnd).trim();
+        } else if (lower.startsWith("sec^")) {
+            function = "sec";
+            String rest = lower.substring(4);
+            int powEnd = 0;
+            while (powEnd < rest.length() && Character.isDigit(rest.charAt(powEnd))) {
+                powEnd++;
+            }
+            power = Integer.parseInt(rest.substring(0, powEnd));
+            argument = rest.substring(powEnd).trim();
+        } else if (lower.startsWith("cosec^") || lower.startsWith("csc^")) {
+            function = lower.startsWith("csc^") ? "csc" : "cosec";
+            String base = lower.startsWith("csc^") ? "csc^" : "cosec^";
+            String rest = lower.substring(base.length());
+            int powEnd = 0;
+            while (powEnd < rest.length() && Character.isDigit(rest.charAt(powEnd))) {
+                powEnd++;
+            }
+            power = Integer.parseInt(rest.substring(0, powEnd));
+            argument = rest.substring(powEnd).trim();
+        } else if (lower.startsWith("sin ")) {
+            function = "sin";
+            argument = lower.substring(4).trim();
+        } else if (lower.startsWith("cos ")) {
+            function = "cos";
+            argument = lower.substring(4).trim();
+        } else if (lower.startsWith("tan ")) {
+            function = "tan";
+            argument = lower.substring(4).trim();
+        } else if (lower.startsWith("cot ")) {
+            function = "cot";
+            argument = lower.substring(4).trim();
+        } else if (lower.startsWith("sec ")) {
+            function = "sec";
+            argument = lower.substring(4).trim();
+        } else if (lower.startsWith("cosec ")) {
+            function = "cosec";
+            argument = lower.substring(6).trim();
+        } else if (lower.startsWith("csc ")) {
+            function = "csc";
+            argument = lower.substring(4).trim();
+        } else {
+            return "0";
+        }
+
+        // Compute derivative based on power
+        if (power == 1) {
+            // Basic trig derivatives
+            switch (function) {
+                case "sin":
+                    return "cos " + argument;
+                case "cos":
+                    return "-sin " + argument;
+                case "tan":
+                    return "sec^2 " + argument;
+                case "csc":
+                    return "-csc " + argument + " * cot " + argument;
+                case "cosec":
+                    return "-csc " + argument + " * cot " + argument;
+                case "sec":
+                    return "sec " + argument + " * tan " + argument;
+                case "cot":
+                    return "-csc^2 " + argument;
+                default:
+                    return "0";
+            }
+        } else {
+            // Chain rule for powers: d/dx(f(x)^n) = n * f(x)^(n-1) * f'(x)
+            String innerDerivative = derivativeOfTrigTerm(function + " " + argument);
+            // For power > 1, we need to handle: d/dx(sin^n x) = n * sin^(n-1) x * cos x
+            // Return a simplified representation
+            if (innerDerivative.startsWith("-")) {
+                return "-" + power + " * " + function + "^" + (power - 1) + " " + argument +
+                       " * " + innerDerivative.substring(1);
+            } else {
+                return power + " * " + function + "^" + (power - 1) + " " + argument +
+                       " * " + innerDerivative;
+            }
+        }
+    }
+
+    // Combines trig derivative and polynomial derivative results
+    public static String combineDerivativeResults(String trigDerivative, String polyDerivative) {
+        if (trigDerivative.equals("0") || trigDerivative.isEmpty()) {
+            return polyDerivative;
+        }
+        if (polyDerivative.equals("0") || polyDerivative.isEmpty()) {
+            return trigDerivative;
+        }
+
+        // Combine them
+        if (polyDerivative.startsWith("-")) {
+            return trigDerivative + " - " + polyDerivative.substring(1);
+        } else {
+            return trigDerivative + " + " + polyDerivative;
+        }
+    }
+
     public   void TermAssignment() {
     int i = 0;
     // Read coefficient
@@ -215,7 +699,7 @@ public class Term extends Utility {
       this.power = power;
     }
     public String DerivativeOfTerm(){
-       
+
         if (this.power == 0) {
             return "0";
         }
@@ -245,7 +729,7 @@ public class Term extends Utility {
             finale.append("\n=> ").append(FormatDerivativeNotation(simplifiedExpression));
         }
         finale.append("\n=> ").append(derivative);
-        
+
         }
         public static String FormatDerivativeNotation(String expression) {
           return "d/dx(" + expression + ")";
@@ -460,85 +944,7 @@ public class Term extends Utility {
           }
           return t.coefficient + String.valueOf(t.variable) + "^" + t.power;
         }
-        
 
 
 
-
-    /* public static void DifferentialCalculus(){
-        //==Division Checking==
-     for(int i = 0; i < Operators.size(); i++){
-     if (Operators.get(i) == '/') {
-        
-     }else{continue;}
-    
-     }
-     for(int i = 0; i < Operators.size(); i++){
-        if (Operators.get(i) == '/') {
-            String get = "";
-            Term term1 = term.get(i);
-            Term term2 = term.get(i + 1);
-            get = term1.DivideTermsC(term1, term2);
-            Term newTerm = new Term(get);
-            newTerm.TermAssignment();
-            
-            term.set(i,newTerm);
-            term.remove(i+1);
-        } else {
-            continue;
-        }}
-     for(int i = 0; i < Operators.size(); i++){
-        if (Operators.get(i) == '*') {
-            String get = "";
-            Term term1 = term.get(i);
-            Term term2 = term.get(i + 1);            
-            Term newTerm = MultiplyTermsC(term1, term2);
-            newTerm.TermAssignment();
-            
-            term.set(i,newTerm);
-            term.remove(i+1);
-          
-        } else {
-            continue;
-        }} for(Term t : term){
-            pln("Derivative of the terms: " + t.eqn);
-        }
-    
-       
-    
-    }
-     public static Term DivideTermsC(Term t1, Term t2){
-        String result = "";
-        Term dt1 = new Term(t1.DerivativeOfTerm());
-        dt1.TermAssignment();
-        Term dt2 = new Term(t2.DerivativeOfTerm());
-        dt2.TermAssignment();
-        result = "("+MultiplyTerms(t2,dt1).eqn+" - "+MultiplyTerms(t1,dt2).eqn +")"+" / ("+MultiplyTerms(t2,t2).eqn+")";
-        return new Term(result);
-    }
-        public static Term MultiplyTermsC(Term t1, Term t2){
-        String result = "";
-        Term dt1 = new Term(t1.DerivativeOfTerm());
-        dt1.TermAssignment();
-        Term dt2 = new Term(t2.DerivativeOfTerm());
-        dt2.TermAssignment();
-        Term returnedTerm = new Term(MultiplyTerms(t1,dt2).eqn); 
-        Term nextreturnedTerm = new Term(MultiplyTerms(t2,dt1).eqn);       
-        return returnedTerm;
-    }
-   public static Term MultiplyTerms(Term t1, Term t2) {
-       String result = "";
-        result = t1.coefficient * t2.coefficient + String.valueOf(t1.variable) + "^" + (t1.power + t2.power);
-       return new Term(result);
-    }
-    public static Term DivideTerms(Term term1, Term term2) {
-        int newCoefficient = term1.coefficient / term2.coefficient;
-        char newVariable = term1.variable; // Assuming both terms have the same variable
-        int newPower = term1.power - term2.power;
-        Term z = new Term(newCoefficient + String.valueOf(newVariable) + "^" + newPower);
-        z.TermAssignment();
-        return z;
-    }
-        */
-    
 }
