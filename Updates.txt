@@ -83,6 +83,11 @@
     => cos 2x + 1 + 6x
 */
    /* 06/07/2026 :- 
-
+   Added Integration.java to compute Integration Logic.
+   Added Main.java to have greeting screen.
+   Added option for Binomial Expression, Calculus, Trignometry in Main.java.
+   Added option for Differentiation, Partial Differentiation, Integration in Term.java.
+   Added Trignometric Functions Integrals to Integration.java
+   Completed Indefinite Integration
 
    */

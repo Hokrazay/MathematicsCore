@@ -1,4 +1,4 @@
-//Project Started By Saket Shrivastava on 03/07/2026
+
 
 
 
@@ -34,7 +34,13 @@ public class Term extends Utility {
 
     public  static void main(String[] args) {
         Scanner input = new Scanner(System.in);
+        runCalculus(input);
+    }
 
+    public static void runCalculus(Scanner input) {
+        term.clear();
+        Operators.clear();
+        finale.setLength(0);
 
         pln("Enter the equation in the format given below : \n");
         pln("Example : x^3 + 3x^2 - 4x + 5");
@@ -43,67 +49,56 @@ public class Term extends Utility {
         pln("Note :\n-> 1 is represented as 1x^0 \n-> 0 is represented as 0x^0\n-> x is represented as 1x^1");
         String equation = input.nextLine();
 
-        // Check if the expression contains trigonometric functions
-        boolean hasTrig = isTrigonometric(equation);
+        pln("What function do you want to perform on the equation? Enter your choice:");
+        pln("[D] - Differentiation.");
+        pln("[P] - Partial Differentiation");
+        pln("[I] - Integration");
 
-        if (hasTrig) {
-            // For trigonometric expressions, use TrignometryForCalculus to simplify the trig part
-            // Then process with the existing BODMAS + differentiation pipeline
-            processTrigonometricExpression(equation);
-        } else {
-            String[] tokens = equation.split(" ");
+        String selectedChoice = input.nextLine().trim();
+        char choice = selectedChoice.isEmpty() ? ' ' : selectedChoice.charAt(0);
 
-            for(String token : tokens) {
-             if(token.isEmpty()) {
-              continue;
-             }
-
-             if(token.equals("+") || token.equals("-") ||
-             token.equals("*") || token.equals("/")) {
-
-             Operators.add(token.charAt(0));
-
-             } else {
-
-             Term terms = new Term(token);
-             term.add(terms);
-             term.get(term.size() - 1).TermAssignment();
-
-            }
-          }
-
-          pln("What function do you want to perform on the equation? Enter your choice:");
-          pln("\n1. [D] Derivative\n3. [P] Partial Derivative\n4. [I] Definite Integration\n5. [N] Indefinite Integration\n6. [E] Exit");
-          char choice = input.next().charAt(0);
-          switch(choice) {
+        switch(choice) {
             case 'd':
             case 'D':
-              DifferentialCalculus();
+              if (isTrigonometric(equation)) {
+                processTrigonometricExpression(equation);
+              } else {
+                parsePolynomialEquation(equation);
+                DifferentialCalculus();
+                pln("\nFinal Results ->\n" + finale.toString());
+              }
               break;
             case 'p':
             case 'P':
-              // Perform partial derivative
+              pln("Under Development");
               break;
             case 'i':
             case 'I':
-              // Perform definite integration
+              Integration.performIntegration(equation, input);
               break;
-            case 'n':
-            case 'N':
-              // Perform indefinite integration
-              break;
-            case 'e':
-            case 'E':
-              pln("Exiting the program.");
-              System.exit(0);
-
             default:
               pln("Invalid choice!");
-          }
-          input.close();
-          pln("Final Result: \n" + finale.toString());
         }
 
+    }
+
+    public static void parsePolynomialEquation(String equation) {
+        String[] tokens = equation.split(" ");
+
+        for(String token : tokens) {
+            if(token.isEmpty()) {
+                continue;
+            }
+
+            if(token.equals("+") || token.equals("-") ||
+               token.equals("*") || token.equals("/")) {
+                Operators.add(token.charAt(0));
+            } else {
+                Term terms = new Term(token);
+                term.add(terms);
+                term.get(term.size() - 1).TermAssignment();
+            }
+        }
     }
 
     // Detects if an expression contains trigonometric functions
@@ -153,7 +148,7 @@ public class Term extends Utility {
         String finalDerivative = combineDerivativeResults(trigDerivative, polyDerivative);
         finale.append("\n=> ").append(finalDerivative);
 
-        pln("Final Result: \n" + finale.toString());
+        pln("Final Results ->\n" + finale.toString());
     }
 
     static class SignedExpression {
@@ -453,7 +448,7 @@ public class Term extends Utility {
             }
         }
 
-        return result.toString();
+        return first ? "0" : result.toString();
     }
 
     // Computes derivatives of trigonometric terms
@@ -660,10 +655,14 @@ public class Term extends Utility {
         i++;
     }
 
-    while (i < eqn.length() && Character.isDigit(eqn.charAt(i))) {
-        coeff += eqn.charAt(i);
-        i++;
-    }
+        if (i < eqn.length() && eqn.charAt(i) == '+') {
+            i++;
+        }
+
+        while (i < eqn.length() && Character.isDigit(eqn.charAt(i))) {
+            coeff += eqn.charAt(i);
+            i++;
+        }
 
     int coefficient = coeff.isEmpty() ? 1 : Integer.parseInt(coeff);
     if (isNegative) {
@@ -687,12 +686,21 @@ public class Term extends Utility {
 
         String pow = "";
 
+        boolean negativePower = false;
+        if (i < eqn.length() && eqn.charAt(i) == '-') {
+            negativePower = true;
+            i++;
+        }
+
         while (i < eqn.length() && Character.isDigit(eqn.charAt(i))) {
             pow += eqn.charAt(i);
             i++;
         }
 
         power = pow.isEmpty() ? 1 : Integer.parseInt(pow);
+        if (negativePower) {
+            power = -power;
+        }
     }
       this.coefficient = coefficient;
       this.variable = variable;
@@ -732,7 +740,44 @@ public class Term extends Utility {
 
         }
         public static String FormatDerivativeNotation(String expression) {
-          return "d/dx(" + expression + ")";
+          return "d/d" + FindVariable(expression) + "(" + expression + ")";
+        }
+        public static char FindVariable(String expression) {
+          String lowerExpression = expression.toLowerCase();
+          for(int i = 0; i < expression.length(); i++) {
+              if (isTrigFunctionNameAt(lowerExpression, i)) {
+                  i += trigFunctionNameLength(lowerExpression, i) - 1;
+                  continue;
+              }
+              char current = expression.charAt(i);
+              if(Character.isLetter(current)) {
+                  return current;
+              }
+          }
+          return 'x';
+        }
+        public static boolean isTrigFunctionNameAt(String expression, int index) {
+          return expression.startsWith("cosec", index) ||
+                 expression.startsWith("csc", index) ||
+                 expression.startsWith("sin", index) ||
+                 expression.startsWith("cos", index) ||
+                 expression.startsWith("tan", index) ||
+                 expression.startsWith("cot", index) ||
+                 expression.startsWith("sec", index);
+        }
+        public static int trigFunctionNameLength(String expression, int index) {
+          if(expression.startsWith("cosec", index)) {
+              return 5;
+          }
+          if(expression.startsWith("csc", index) ||
+             expression.startsWith("sin", index) ||
+             expression.startsWith("cos", index) ||
+             expression.startsWith("tan", index) ||
+             expression.startsWith("cot", index) ||
+             expression.startsWith("sec", index)) {
+              return 3;
+          }
+          return 1;
         }
         public static ArrayList<Term> SimplifyOriginalExpression() {
           ArrayList<Term> collapsedTerms = new ArrayList<>();
@@ -910,7 +955,8 @@ public class Term extends Utility {
           }
           int newCoefficient = t1.coefficient / t2.coefficient;
           int newPower = t1.power - t2.power;
-          Term result = new Term(newCoefficient, t1.variable, newPower);
+          char newVariable = t1.power == 0 && t2.power != 0 ? t2.variable : t1.variable;
+          Term result = new Term(newCoefficient, newVariable, newPower);
           result.eqn = FormatTerm(result);
           return result;
         }

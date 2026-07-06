@@ -1,3 +1,4 @@
+
 public class Utility{
     public static void pln(Object message){
         System.out.println(message);

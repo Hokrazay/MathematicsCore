@@ -1,3 +1,4 @@
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -225,6 +226,9 @@ public class TrignometryForCalculus {
             if (term.expression instanceof NumberExpr) {
                 total += term.sign * ((NumberExpr) term.expression).value;
                 numberCount++;
+            } else if (term.expression instanceof UnaryMinus && ((UnaryMinus) term.expression).inner instanceof NumberExpr) {
+                total -= term.sign * ((NumberExpr) ((UnaryMinus) term.expression).inner).value;
+                numberCount++;
             } else {
                 remaining.add(term);
             }
@@ -257,35 +261,35 @@ public class TrignometryForCalculus {
 
         if (sameTrigPower(first.expression, second.expression, "tan", "sec", 2)) {
             if (first.sign == 1 && second.sign == -1) {
-                return new SignedTerm(1, num(1));
+                return new SignedTerm(-1, num(1));
             }
             if (first.sign == -1 && second.sign == 1) {
-                return new SignedTerm(-1, num(1));
+                return new SignedTerm(1, num(1));
             }
         }
         if (sameTrigPower(first.expression, second.expression, "sec", "tan", 2)) {
             if (first.sign == -1 && second.sign == 1) {
-                return new SignedTerm(1, num(1));
+                return new SignedTerm(-1, num(1));
             }
             if (first.sign == 1 && second.sign == -1) {
-                return new SignedTerm(-1, num(1));
+                return new SignedTerm(1, num(1));
             }
         }
 
         if (sameTrigPower(first.expression, second.expression, "cot", "cosec", 2)) {
             if (first.sign == 1 && second.sign == -1) {
-                return new SignedTerm(1, num(1));
+                return new SignedTerm(-1, num(1));
             }
             if (first.sign == -1 && second.sign == 1) {
-                return new SignedTerm(-1, num(1));
+                return new SignedTerm(1, num(1));
             }
         }
         if (sameTrigPower(first.expression, second.expression, "cosec", "cot", 2)) {
             if (first.sign == -1 && second.sign == 1) {
-                return new SignedTerm(1, num(1));
+                return new SignedTerm(-1, num(1));
             }
             if (first.sign == 1 && second.sign == -1) {
-                return new SignedTerm(-1, num(1));
+                return new SignedTerm(1, num(1));
             }
         }
 
@@ -348,7 +352,7 @@ public class TrignometryForCalculus {
             return num(0);
         }
 
-        Expr result = terms.get(0).sign < 0 ? new UnaryMinus(terms.get(0).expression) : terms.get(0).expression;
+        Expr result = applySign(terms.get(0).expression, terms.get(0).sign);
         for (int i = 1; i < terms.size(); i++) {
             SignedTerm term = terms.get(i);
             if (term.sign < 0) {
@@ -358,6 +362,19 @@ public class TrignometryForCalculus {
             }
         }
         return result;
+    }
+
+    private static Expr applySign(Expr expression, int sign) {
+        if (sign >= 0) {
+            return expression;
+        }
+        if (expression instanceof NumberExpr) {
+            return num(-((NumberExpr) expression).value);
+        }
+        if (expression instanceof UnaryMinus) {
+            return ((UnaryMinus) expression).inner;
+        }
+        return new UnaryMinus(expression);
     }
 
     private static SimplifyResult simplifyAddition(Expr left, Expr right) {
