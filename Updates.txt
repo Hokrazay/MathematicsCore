@@ -95,5 +95,94 @@
    Substitution (Reverse Chain rule) done in Integration.
    Completed Chain Rule Basics [Enough for Differentiation and Integration at this level of Program] at 20:25 hrs.
    Chain Rule completely Debugged. :)
+  
+   */
+   /* 07/07/2026
+   Started work on Derivative Evaluation, in essence, after Derivative is computed , it is evaluated with a value assigned to the variable.
+      For example :-  
+      User time : 14:17 hrs 
+Good Afternoon Sir/Madam, What would you like to do today? 
+1. Binomial Expression Solving 
+2. Calculus 
+3. Trignometry 
+2 
 
+Enter the equation in the format given below : 
+Example : 2 * sin x * cos x + x^3 + 3x^2 - 4x + 5 
+Ensure that there is a space between the terms and the operators. 
+Ensure there is only ONE VARIABLE and only ONE OF EACH OPERATOR in the equation. 
+Note : 
+-> 1 is represented as 1x^0 
+-> 0 is represented as 0x^0 
+-> x is represented as 1x^1 
+3x^5 + 9x^2 / 3x^1 - 3x^1 + 12x^3 + 1x^3 
+
+What function do you want to perform on the equation? Enter your choice: 
+[D] - Differentiation. 
+[P] - Partial Differentiation 
+[I] - Integration 
+D 
+
+Final Results -> 
+d/dx(3x^4 + 9x^2 / 3x - 3x + 12x^3 + x^3 ) 
+=> d/dx(3x^4 + 3x - 3x + 13x^3) 
+=> d/dx(3x^4 + 13x^3) 
+=> 12x^3 + 39x^2 
+
+Do you want to evaluate this expression at any value? 
+[Y] - Yes 
+[N] - No, Thanks. 
+Y 
+
+Enter value of evaluation :- 
+5 
+
+Evaluating 12x^3 + 39x^2 at 5 --> 
+d/dx(3x^4 + 9x^2 / 3x - 3x + 12x^3 + x^3 ) |x=5 
+=> 12(5)^3 + 39(5)^2 
+=> 1500 + 975 
+=> 2475
+-------------------------------------------
+
+Started work on Definite Integration to evaluate integrals between two limits b and a, upper and lower limit respectively.
+For example :-
+User time : 14:30 hrs 
+Good Afternoon Sir/Madam, What would you like to do today? 
+1. Binomial Expression Solving 
+2. Calculus 
+3. Trignometry 
+2 
+Enter the equation in the format given below : 
+Example : 2 * sin x * cos x + x^3 + 3x^2 - 4x + 5 
+
+Ensure that there is a space between the terms and the operators.
+
+Enter Equation : x^2 + 9x^2 / 3x - 3x * 4x + 12x 
+What function do you want to perform on the equation? Enter your choice: 
+[D] - Differentiation. 
+[P] - Partial Differentiation 
+[I] - Integration 
+I 
+What type of Integration do you want to perform? Enter your choice: 
+[D] - Definite Integration 
+[I] - Indefinite Integration 
+D 
+
+Tell me values of limits you want to resolve the Integral of x^2 + 9x^2 / 3x - 3x * 4x + 12x ? Give upper limit (b) followed by lower limit (a). 
+b = 3 
+a = 2 
+
+Final Result: 
+(x^2 + 9x^2 / 3x - 3x * 4x + 12x) dx 
+=> (-11x^2 + 15x) dx 
+=> -11x^3 / 3 + 15x^2 / 2 + C 
+Applying upper and lower limits --> 
+=> [-11(3)^3 / 3 + 15(3)^2 / 2] - [-11(2)^3 / 3 + 15(2)^2 / 2] 
+=> -297 / 3 + 135 / 2 + 88 / 3 - 60 / 2 
+=> -99 + 135 / 2 + 88 / 3 - 30 
+=> -129 + (405 + 176) / 6 
+=> -129 + 581 / 6 => -129 + 96.8 [Rounding off to 1 decimal place] 
+=> -32.2 
+---------------------------------------------------------------------------- 
+BOTH INCOMPLETE, WORK TO BE FOLLOWED UP.
    */

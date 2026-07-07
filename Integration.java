@@ -25,7 +25,7 @@ public class Integration extends Utility {
         switch (choice) {
             case 'd':
             case 'D':
-                pln("Under Development");
+                performDefiniteIntegration(equation, input);
                 break;
             case 'i':
             case 'I':
@@ -34,6 +34,78 @@ public class Integration extends Utility {
             default:
                 pln("Invalid choice!");
         }
+    }
+
+    public static void performDefiniteIntegration(String equation, Scanner input) {
+        pln("\nTell me values of limits you want to resolve the Integral of " + equation + " ?");
+        pln("Give upper limit (b) followed by lower limit (a).");
+        Double upperLimit = readDoubleGracefully(input, "b =");
+        Double lowerLimit = readDoubleGracefully(input, "a =");
+
+        String integrationSteps = integrateIndefinitely(equation);
+        pln("\nFinal Result: \n" + integrationSteps);
+
+        String integratedFunction = removeTrailingConstant(extractFinalExpression(integrationSteps));
+        applyLimits(integratedFunction, upperLimit, lowerLimit);
+    }
+
+    public static void applyLimits(String integratedFunction, double upperLimit, double lowerLimit) {
+        if (integratedFunction == null || integratedFunction.trim().isEmpty()
+                || integratedFunction.equals("Invalid expression.")) {
+            pln("Unable to apply limits because the antiderivative could not be resolved.");
+            return;
+        }
+
+        boolean trigExpression = containsTrig(integratedFunction);
+        double upperEvaluationValue = trigExpression ? Math.toRadians(upperLimit) : upperLimit;
+        double lowerEvaluationValue = trigExpression ? Math.toRadians(lowerLimit) : lowerLimit;
+
+        try {
+            double upperResult = evaluateIntegral(integratedFunction, upperEvaluationValue);
+            double lowerResult = evaluateIntegral(integratedFunction, lowerEvaluationValue);
+            double result = upperResult - lowerResult;
+            displayLimitSteps(integratedFunction, upperLimit, lowerLimit, upperResult, lowerResult, result);
+        } catch (RuntimeException error) {
+            pln("Unable to evaluate definite integral: " + error.getMessage());
+        }
+    }
+
+    public static double evaluateIntegral(String integratedFunction, double value) {
+        return parseFunction(integratedFunction).applyAsDouble(value);
+    }
+
+    public static void displayLimitSteps(String integratedFunction, double upperLimit, double lowerLimit,
+                                         double upperResult, double lowerResult, double result) {
+        boolean trigExpression = containsTrig(integratedFunction);
+        String upperSubstitution = substituteVariable(integratedFunction, upperLimit, trigExpression);
+        String lowerSubstitution = substituteVariable(integratedFunction, lowerLimit, trigExpression);
+
+        pln("Applying upper and lower limits -->");
+        pln("=> [" + upperSubstitution + "] - [" + lowerSubstitution + "]");
+
+        if (trigExpression) {
+            String upperRadians = substituteVariableForEvaluation(integratedFunction, upperLimit);
+            String lowerRadians = substituteVariableForEvaluation(integratedFunction, lowerLimit);
+            if (!upperRadians.equals(upperSubstitution) || !lowerRadians.equals(lowerSubstitution)) {
+                pln("=> [" + upperRadians + "] - [" + lowerRadians + "]");
+            }
+        }
+
+        String upperParts = evaluateTopLevelParts(integratedFunction,
+                trigExpression ? Math.toRadians(upperLimit) : upperLimit);
+        String lowerParts = evaluateTopLevelParts(integratedFunction,
+                trigExpression ? Math.toRadians(lowerLimit) : lowerLimit);
+        if (!upperParts.isEmpty() && !lowerParts.isEmpty()) {
+            pln("=> " + upperParts + " - (" + lowerParts + ")");
+        }
+
+        pln("=> " + formatNumber(upperResult) + " - (" + formatNumber(lowerResult) + ")");
+        pln("=> " + formatRoundedResult(result));
+    }
+
+    public static String formatRoundedResult(double result) {
+        double rounded = Math.round(result * 10.0) / 10.0;
+        return formatNumber(rounded);
     }
 
     public static String integrateIndefinitely(String equation) {

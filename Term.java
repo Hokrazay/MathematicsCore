@@ -64,6 +64,7 @@ public class Term extends Utility {
                 DifferentialCalculus();
                 pln("\nFinal Results ->\n" + finale.toString());
               }
+              evaluateDerivative(equation, input);
               break;
             case 'p':
             case 'P':
@@ -77,6 +78,43 @@ public class Term extends Utility {
               pln("Invalid choice!");
         }
 
+    }
+
+    public static void evaluateDerivative(String originalEquation, Scanner input) {
+        String finalDerivative = extractFinalExpression(finale.toString());
+        if (finalDerivative == null || finalDerivative.trim().isEmpty()
+                || finalDerivative.equals("Invalid expression.")) {
+            return;
+        }
+
+        pln("\nDo you want to evaluate this expression at any value?");
+        pln("[Y] - Yes");
+        pln("[N] - No, Thanks.");
+
+        while (true) {
+            String selectedChoice = input.nextLine().trim();
+            char choice = selectedChoice.isEmpty() ? ' ' : selectedChoice.charAt(0);
+
+            switch (choice) {
+                case 'n':
+                case 'N':
+                    System.exit(0);
+                    return;
+                case 'y':
+                case 'Y':
+                    Double userValue = readDoubleGracefully(input, "\nEnter value of evaluation :-");
+                    pln("\nEvaluating\n");
+                    pln(finalDerivative + "\n");
+                    pln("at\n");
+                    pln(formatNumber(userValue) + "\n");
+                    pln("-->");
+                    pln(FormatDerivativeNotation(originalEquation.trim()) + " |x=" + formatNumber(userValue));
+                    displayEvaluationSteps(finalDerivative, userValue);
+                    return;
+                default:
+                    pln("Invalid choice! Please enter Y or N.");
+            }
+        }
     }
 
     public static void parsePolynomialEquation(String equation) {
