@@ -185,4 +185,62 @@ Applying upper and lower limits -->
 => -32.2 
 ---------------------------------------------------------------------------- 
 BOTH INCOMPLETE, WORK TO BE FOLLOWED UP.
+   
    */
+ /* 08/07/26
+ Added and Completed Partial Differentiation.
+ Partially debugged Indefinite Integration and Differentiation evaluation.
+ Made some Display Changes like del/del(..) and Equation :..
+ Example Run As of now :
+
+ User time : 19:40 hrs
+Good Evening Sir/Madam,
+What would you like to do today?
+1. Binomial Expression Solving
+2. Calculus
+3. Trignometry
+2
+Enter the equation in the format given below : 
+
+Example : 2 * sin x * cos x + x^3 + 3x^2 - 4x + 5
+Ensure that there is a space between the terms and the operators.
+
+Ensure there is only ONE VARIABLE and only ONE OF EACH OPERATOR in the equation.
+
+Note :
+-> 1 is represented as 1x^0 
+-> 0 is represented as 0x^0
+-> x is represented as 1x^1
+
+Equation : 3 * (x^2) * z + (4 * (y^2) * (x^6) / (2 * (x^3) * y)) + (x^2) * z - (x^3) * y
+What function do you want to perform on the equation? Enter your choice:
+[D] - Differentiation.
+[P] - Partial Differentiation
+[I] - Integration
+P
+
+With Respect to which variable do you want to do Partial Differentiation (x , z , y) ?
+x
+Final Results ->
+del/del x(3 * (x^2) * z + (4 * (y^2) * (x^6) / (2 * (x^3) * y)) + (x^2) * z - (x^3) * y)
+=> del/del x(3 * x^2 * z + 4 * y^2 * x^6 / (2 * x^3 * y) + x^2 * z - x^3 * y)
+=> del/del x(4x^2 * z + y * x^3)
+=> 8x * z + 3y * x^2
+
+Do you want to evaluate this expression at any value?
+[Y] - Yes
+[N] - No, Thanks.
+4
+Invalid choice! Please enter Y or N.
+Y
+
+Enter value of evaluation :-
+4
+
+Evaluating 8x * z + 3y * x^2 at x = 4 :
+
+-->
+del/del x(3 * (x^2) * z + (4 * (y^2) * (x^6) / (2 * (x^3) * y)) + (x^2) * z - (x^3) * y) |x=4
+=> 8(4) * z + 3y * (4)^2
+=> 32z + 48y
+*/

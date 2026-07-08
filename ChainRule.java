@@ -1,11 +1,15 @@
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
 
 public class ChainRule extends Utility {
     private static final String[] FUNCTIONS = {"cosec", "sqrt", "sin", "cos", "tan", "cot", "sec", "csc", "ln", "exp"};
+    private static String activeDerivativeVariable = "x";
 
     public static boolean isChainRuleCandidate(String expression) {
         if (expression == null) {
@@ -31,7 +35,7 @@ public class ChainRule extends Utility {
             String original = equation.trim();
             String converted = convertSqrtToPower(original);
             Expr expression = parse(converted);
-            Expr derivative = simplify(expression.derivative());
+            Expr derivative = simplify(derivativeOf(expression, 'x'));
             String derivativeText = simplifyText(derivative.format());
 
             StringBuilder result = new StringBuilder();
@@ -44,6 +48,35 @@ public class ChainRule extends Utility {
         } catch (RuntimeException error) {
             return "Invalid expression.";
         }
+    }
+
+    public static String differentiatePartiallyWithSteps(String equation, char variable) {
+        try {
+            String original = equation.trim();
+            String converted = convertSqrtToPower(original);
+            Expr expression = parse(converted);
+            Expr simplifiedExpression = simplify(expression);
+            Expr derivative = simplify(derivativeOf(simplifiedExpression, variable));
+            String derivativeText = simplifyText(derivative.format());
+
+            StringBuilder result = new StringBuilder();
+            result.append(Term.FormatPartialDerivativeNotation(original, variable));
+            if (!normalize(original).equals(normalize(converted))) {
+                result.append("\n=> ").append(Term.FormatPartialDerivativeNotation(converted, variable));
+            }
+            String simplifiedText = simplifyText(simplifiedExpression.format());
+            if (!normalize(converted).equals(normalize(simplifiedText))) {
+                result.append("\n=> ").append(Term.FormatPartialDerivativeNotation(simplifiedText, variable));
+            }
+            result.append("\n=> ").append(derivativeText);
+            return result.toString();
+        } catch (RuntimeException error) {
+            return "Invalid expression.";
+        }
+    }
+
+    public static String simplifyExpression(String expression) {
+        return simplifyText(simplify(parse(expression)).format());
     }
 
     public static String integrateWithSteps(String equation) {
@@ -264,6 +297,16 @@ public class ChainRule extends Utility {
         return new Parser(expression).parse();
     }
 
+    private static Expr derivativeOf(Expr expression, char variable) {
+        String previousVariable = activeDerivativeVariable;
+        activeDerivativeVariable = String.valueOf(Character.toLowerCase(variable));
+        try {
+            return expression.derivative();
+        } finally {
+            activeDerivativeVariable = previousVariable;
+        }
+    }
+
     private static String convertSqrtToPower(String expression) {
         try {
             Expr parsed = parse(expression);
@@ -335,11 +378,15 @@ public class ChainRule extends Utility {
                 if (isZero(left)) return right;
                 if (isZero(right)) return left;
                 if (left instanceof Constant && right instanceof Constant) return new Constant(((Constant) left).value + ((Constant) right).value);
+                Expr combined = simplifyAdditiveTerms(new Binary("+", left, right));
+                if (combined != null) return combined;
                 return new Binary("+", left, right);
             }
             if (binary.operator.equals("-")) {
                 if (isZero(right)) return left;
                 if (left instanceof Constant && right instanceof Constant) return new Constant(((Constant) left).value - ((Constant) right).value);
+                Expr combined = simplifyAdditiveTerms(new Binary("-", left, right));
+                if (combined != null) return combined;
                 return new Binary("-", left, right);
             }
             if (binary.operator.equals("*")) {
@@ -357,6 +404,14 @@ public class ChainRule extends Utility {
                 }
                 if (left instanceof Fraction && right instanceof Constant) {
                     return simplify(multiplyConstantAndFraction((Constant) right, (Fraction) left));
+                }
+                if (left instanceof Binary && ((Binary) left).operator.equals("/")) {
+                    Binary quotient = (Binary) left;
+                    return simplify(new Binary("/", new Binary("*", quotient.left, right), quotient.right));
+                }
+                if (right instanceof Binary && ((Binary) right).operator.equals("/")) {
+                    Binary quotient = (Binary) right;
+                    return simplify(new Binary("/", new Binary("*", left, quotient.left), quotient.right));
                 }
                 if (left instanceof Constant && right instanceof Constant) return new Constant(((Constant) left).value * ((Constant) right).value);
                 if (left instanceof Constant && right instanceof Binary && ((Binary) right).operator.equals("*") && ((Binary) right).left instanceof Constant) {
@@ -387,6 +442,8 @@ public class ChainRule extends Utility {
                     Expr cancelled = cancelOneFactor(product.left, product.right, right);
                     if (cancelled != null) return cancelled;
                 }
+                Expr divided = simplifyQuotientByFactors(left, right);
+                if (divided != null) return divided;
                 return new Binary("/", left, right);
             }
         }
@@ -445,6 +502,7 @@ public class ChainRule extends Utility {
         int coefficient = 1;
         int constants = 0;
         boolean changed = false;
+        LinkedHashMap<String, Integer> variablePowers = new LinkedHashMap<>();
         ArrayList<Expr> nonNumericFactors = new ArrayList<>();
 
         for (Expr factor : factors) {
@@ -460,12 +518,19 @@ public class ChainRule extends Utility {
                 if (constants > 1 || ((Constant) current).value < 0) {
                     changed = true;
                 }
+            } else if (current instanceof Variable) {
+                String name = ((Variable) current).name;
+                changed = addVariablePower(variablePowers, name, 1) || changed;
+            } else if (current instanceof Power && ((Power) current).base instanceof Variable && ((Power) current).exponent instanceof Constant) {
+                String name = ((Variable) ((Power) current).base).name;
+                int power = ((Constant) ((Power) current).exponent).value;
+                changed = addVariablePower(variablePowers, name, power) || changed;
             } else {
                 nonNumericFactors.add(current);
             }
         }
 
-        if (!changed && constants <= 1) {
+        if (!changed && constants <= 1 && variablePowers.isEmpty()) {
             return null;
         }
         if (coefficient == 0) {
@@ -474,8 +539,14 @@ public class ChainRule extends Utility {
 
         Expr result = null;
         int absoluteCoefficient = Math.abs(coefficient);
-        if (absoluteCoefficient != 1 || nonNumericFactors.isEmpty()) {
+        if (absoluteCoefficient != 1 || (variablePowers.isEmpty() && nonNumericFactors.isEmpty())) {
             result = new Constant(absoluteCoefficient);
+        }
+        for (Map.Entry<String, Integer> entry : variablePowers.entrySet()) {
+            Expr variableFactor = variablePower(entry.getKey(), entry.getValue());
+            if (variableFactor != null) {
+                result = result == null ? variableFactor : new Binary("*", result, variableFactor);
+            }
         }
         for (Expr factor : nonNumericFactors) {
             result = result == null ? factor : new Binary("*", result, factor);
@@ -484,6 +555,217 @@ public class ChainRule extends Utility {
             return new UnaryMinus(result);
         }
         return result;
+    }
+
+    private static Expr simplifyQuotientByFactors(Expr numerator, Expr denominator) {
+        FactorParts top = factorParts(numerator);
+        FactorParts bottom = factorParts(denominator);
+        if (!top.supported || !bottom.supported || bottom.coefficient == 0) {
+            return null;
+        }
+
+        boolean changed = false;
+        int coefficientNumerator = top.coefficient;
+        int coefficientDenominator = bottom.coefficient;
+        int gcd = gcd(Math.abs(coefficientNumerator), Math.abs(coefficientDenominator));
+        if (gcd > 1) {
+            coefficientNumerator /= gcd;
+            coefficientDenominator /= gcd;
+            changed = true;
+        }
+
+        LinkedHashMap<String, Integer> numeratorPowers = new LinkedHashMap<>(top.variablePowers);
+        LinkedHashMap<String, Integer> denominatorPowers = new LinkedHashMap<>(bottom.variablePowers);
+        for (String variable : new ArrayList<>(numeratorPowers.keySet())) {
+            if (denominatorPowers.containsKey(variable)) {
+                int cancel = Math.min(numeratorPowers.get(variable), denominatorPowers.get(variable));
+                if (cancel > 0) {
+                    numeratorPowers.put(variable, numeratorPowers.get(variable) - cancel);
+                    denominatorPowers.put(variable, denominatorPowers.get(variable) - cancel);
+                    changed = true;
+                }
+            }
+        }
+
+        cancelMatchingFactors(top.otherFactors, bottom.otherFactors);
+        if (!top.otherFactors.equals(factorParts(numerator).otherFactors) || !bottom.otherFactors.equals(factorParts(denominator).otherFactors)) {
+            changed = true;
+        }
+
+        if (!changed) {
+            return null;
+        }
+
+        Expr rebuiltNumerator = buildProduct(coefficientNumerator, numeratorPowers, top.otherFactors);
+        Expr rebuiltDenominator = buildProduct(coefficientDenominator, denominatorPowers, bottom.otherFactors);
+        if (isOne(rebuiltDenominator)) {
+            return rebuiltNumerator;
+        }
+        return new Binary("/", rebuiltNumerator, rebuiltDenominator);
+    }
+
+    private static void cancelMatchingFactors(List<Expr> numeratorFactors, List<Expr> denominatorFactors) {
+        for (int i = numeratorFactors.size() - 1; i >= 0; i--) {
+            Expr numeratorFactor = numeratorFactors.get(i);
+            for (int j = denominatorFactors.size() - 1; j >= 0; j--) {
+                if (numeratorFactor.equals(denominatorFactors.get(j))) {
+                    numeratorFactors.remove(i);
+                    denominatorFactors.remove(j);
+                    break;
+                }
+            }
+        }
+    }
+
+    private static FactorParts factorParts(Expr expression) {
+        ArrayList<Expr> factors = new ArrayList<>();
+        collectMul(expression, factors);
+        FactorParts parts = new FactorParts();
+        for (Expr factor : factors) {
+            Expr current = factor;
+            if (current instanceof UnaryMinus) {
+                parts.coefficient *= -1;
+                current = ((UnaryMinus) current).inner;
+            }
+            if (current instanceof Constant) {
+                parts.coefficient *= ((Constant) current).value;
+            } else if (current instanceof Variable) {
+                addVariablePower(parts.variablePowers, ((Variable) current).name, 1);
+            } else if (current instanceof Power && ((Power) current).base instanceof Variable && ((Power) current).exponent instanceof Constant) {
+                addVariablePower(parts.variablePowers, ((Variable) ((Power) current).base).name, ((Constant) ((Power) current).exponent).value);
+            } else {
+                parts.otherFactors.add(current);
+            }
+        }
+        return parts;
+    }
+
+    private static boolean addVariablePower(LinkedHashMap<String, Integer> powers, String variable, int power) {
+        int previous = powers.containsKey(variable) ? powers.get(variable) : 0;
+        powers.put(variable, previous + power);
+        return previous != 0;
+    }
+
+    private static Expr variablePower(String variable, int power) {
+        if (power == 0) {
+            return null;
+        }
+        Expr base = new Variable(variable);
+        return power == 1 ? base : new Power(base, new Constant(power));
+    }
+
+    private static Expr buildProduct(int coefficient, LinkedHashMap<String, Integer> variablePowers, List<Expr> otherFactors) {
+        Expr result = null;
+        if (coefficient != 1 || (variablePowers.isEmpty() && otherFactors.isEmpty())) {
+            result = new Constant(coefficient);
+        }
+        for (Map.Entry<String, Integer> entry : variablePowers.entrySet()) {
+            Expr factor = variablePower(entry.getKey(), entry.getValue());
+            if (factor != null) {
+                result = result == null ? factor : new Binary("*", result, factor);
+            }
+        }
+        for (Expr factor : otherFactors) {
+            result = result == null ? factor : new Binary("*", result, factor);
+        }
+        return result == null ? new Constant(1) : result;
+    }
+
+    private static class FactorParts {
+        int coefficient = 1;
+        boolean supported = true;
+        LinkedHashMap<String, Integer> variablePowers = new LinkedHashMap<>();
+        ArrayList<Expr> otherFactors = new ArrayList<>();
+    }
+
+    private static Expr simplifyAdditiveTerms(Expr expression) {
+        ArrayList<SignedExpr> terms = new ArrayList<>();
+        collectAdditiveTerms(expression, 1, terms);
+        if (terms.size() <= 1) {
+            return null;
+        }
+
+        LinkedHashMap<String, CombinedTerm> combined = new LinkedHashMap<>();
+        boolean changed = false;
+        for (SignedExpr signedExpr : terms) {
+            FactorParts parts = factorParts(signedExpr.expression);
+            String key = factorKey(parts);
+            CombinedTerm current = combined.get(key);
+            int signedCoefficient = signedExpr.sign * parts.coefficient;
+            if (current == null) {
+                combined.put(key, new CombinedTerm(signedCoefficient, parts));
+            } else {
+                current.coefficient += signedCoefficient;
+                changed = true;
+            }
+        }
+
+        if (!changed) {
+            return null;
+        }
+
+        Expr result = null;
+        for (CombinedTerm term : combined.values()) {
+            if (term.coefficient == 0) {
+                continue;
+            }
+            Expr expressionPart = buildProduct(Math.abs(term.coefficient), term.parts.variablePowers, term.parts.otherFactors);
+            if (result == null) {
+                result = term.coefficient < 0 ? new UnaryMinus(expressionPart) : expressionPart;
+            } else if (term.coefficient < 0) {
+                result = new Binary("-", result, expressionPart);
+            } else {
+                result = new Binary("+", result, expressionPart);
+            }
+        }
+        return result == null ? new Constant(0) : result;
+    }
+
+    private static void collectAdditiveTerms(Expr expression, int sign, List<SignedExpr> terms) {
+        if (expression instanceof Binary && (((Binary) expression).operator.equals("+") || ((Binary) expression).operator.equals("-"))) {
+            Binary binary = (Binary) expression;
+            collectAdditiveTerms(binary.left, sign, terms);
+            collectAdditiveTerms(binary.right, binary.operator.equals("+") ? sign : -sign, terms);
+        } else if (expression instanceof UnaryMinus) {
+            collectAdditiveTerms(((UnaryMinus) expression).inner, -sign, terms);
+        } else {
+            terms.add(new SignedExpr(sign, expression));
+        }
+    }
+
+    private static String factorKey(FactorParts parts) {
+        StringBuilder key = new StringBuilder();
+        TreeMap<String, Integer> sortedPowers = new TreeMap<>(parts.variablePowers);
+        for (Map.Entry<String, Integer> entry : sortedPowers.entrySet()) {
+            if (entry.getValue() != 0) {
+                key.append(entry.getKey()).append("^").append(entry.getValue()).append("|");
+            }
+        }
+        key.append("#");
+        for (Expr factor : parts.otherFactors) {
+            key.append(factor.format()).append("|");
+        }
+        return key.toString();
+    }
+
+    private static class SignedExpr {
+        final int sign;
+        final Expr expression;
+
+        SignedExpr(int sign, Expr expression) {
+            this.sign = sign < 0 ? -1 : 1;
+            this.expression = expression;
+        }
+    }
+
+    private static class CombinedTerm {
+        int coefficient;
+        final FactorParts parts;
+
+        CombinedTerm(int coefficient, FactorParts parts) {
+            this.coefficient = coefficient;
+            this.parts = parts;
+        }
     }
 
     private static boolean isZero(Expr expression) {
@@ -541,7 +823,7 @@ public class ChainRule extends Utility {
         }
 
         public Expr derivative() {
-            return new Constant(name.equals("x") ? 1 : 0);
+            return new Constant(name.equals(activeDerivativeVariable) ? 1 : 0);
         }
 
         public String format() {

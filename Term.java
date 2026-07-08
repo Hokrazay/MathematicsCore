@@ -39,6 +39,7 @@ public class Term extends Utility {
         pln("Ensure that there is a space between the terms and the operators.\n");
         pln("Ensure there is only ONE VARIABLE and only ONE OF EACH OPERATOR in the equation.\n");
         pln("Note :\n-> 1 is represented as 1x^0 \n-> 0 is represented as 0x^0\n-> x is represented as 1x^1");
+        p("\nEquation : ");
         String equation = input.nextLine();
 
         pln("What function do you want to perform on the equation? Enter your choice:");
@@ -68,7 +69,7 @@ public class Term extends Utility {
               break;
             case 'p':
             case 'P':
-              pln("Under Development");
+              performPartialDifferentiation(equation, input);
               break;
             case 'i':
             case 'I':
@@ -78,6 +79,68 @@ public class Term extends Utility {
               pln("Invalid choice!");
         }
 
+    }
+
+    public static void performPartialDifferentiation(String equation, Scanner input) {
+        List<Character> variables = findVariables(equation);
+        if (variables.isEmpty()) {
+            pln("No variables found in the expression.");
+            return;
+        }
+
+        char selectedVariable = askPartialVariable(input, variables);
+        String partialSteps = ChainRule.differentiatePartiallyWithSteps(equation, selectedVariable);
+        finale.setLength(0);
+        finale.append(partialSteps);
+        pln("Final Results ->\n" + finale.toString());
+        evaluatePartialDerivative(equation, input, selectedVariable);
+    }
+
+    private static char askPartialVariable(Scanner input, List<Character> variables) {
+        String variableList = formatVariableList(variables);
+        while (true) {
+            pln("\nWith Respect to which variable do you want to do Partial Differentiation " + variableList + " ?");
+            String selected = input.nextLine().trim().toLowerCase();
+            if (selected.length() == 1 && containsVariable(variables, selected.charAt(0))) {
+                return selected.charAt(0);
+            }
+            pln("Invalid variable.");
+            pln("Choose one of " + variableList);
+        }
+    }
+
+    public static void evaluatePartialDerivative(String originalEquation, Scanner input, char variable) {
+        String finalDerivative = extractFinalExpression(finale.toString());
+        if (finalDerivative == null || finalDerivative.trim().isEmpty()
+                || finalDerivative.equals("Invalid expression.")) {
+            return;
+        }
+
+        pln("\nDo you want to evaluate this expression at any value?");
+        pln("[Y] - Yes");
+        pln("[N] - No, Thanks.");
+
+        while (true) {
+            String selectedChoice = input.nextLine().trim();
+            char choice = selectedChoice.isEmpty() ? ' ' : selectedChoice.charAt(0);
+
+            switch (choice) {
+                case 'n':
+                case 'N':
+                    System.exit(0);
+                    return;
+                case 'y':
+                case 'Y':
+                    Double userValue = readDoubleGracefully(input, "\nEnter value of evaluation :-");
+                    pln("\nEvaluating " + finalDerivative + " at " + variable + " = " + formatNumber(userValue) + " :");
+                    pln("\n-->");
+                    pln(FormatPartialDerivativeNotation(originalEquation.trim(), variable) + " |" + variable + "=" + formatNumber(userValue));
+                    displayEvaluationSteps(finalDerivative, userValue, variable);
+                    return;
+                default:
+                    pln("Invalid choice! Please enter Y or N.");
+            }
+        }
     }
 
     public static void evaluateDerivative(String originalEquation, Scanner input) {
@@ -103,11 +166,10 @@ public class Term extends Utility {
                 case 'y':
                 case 'Y':
                     Double userValue = readDoubleGracefully(input, "\nEnter value of evaluation :-");
-                    pln("\nEvaluating\n");
-                    pln(finalDerivative + "\n");
-                    pln("at\n");
-                    pln(formatNumber(userValue) + "\n");
-                    pln("-->");
+                    pln("\nEvaluating " + finalDerivative + " at x = " + formatNumber(userValue) + " :");                    
+                    
+                    
+                    pln("\n-->");
                     pln(FormatDerivativeNotation(originalEquation.trim()) + " |x=" + formatNumber(userValue));
                     displayEvaluationSteps(finalDerivative, userValue);
                     return;
@@ -810,6 +872,9 @@ public class Term extends Utility {
         }
         public static String FormatDerivativeNotation(String expression) {
           return "d/d" + FindVariable(expression) + "(" + expression + ")";
+        }
+        public static String FormatPartialDerivativeNotation(String expression, char variable) {
+          return "del/del " + variable + "(" + expression + ")";
         }
         public static char FindVariable(String expression) {
           String lowerExpression = expression.toLowerCase();

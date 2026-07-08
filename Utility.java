@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Scanner;
 import java.util.function.DoubleUnaryOperator;
@@ -10,6 +11,14 @@ import net.objecthunter.exp4j.ExpressionBuilder;
 import net.objecthunter.exp4j.function.Function;
 
 public class Utility{
+    static {
+        try {
+            System.setOut(new java.io.PrintStream(System.out, true, "UTF-8"));
+        } catch (java.io.UnsupportedEncodingException error) {
+            // Keep the default console encoding if UTF-8 is unavailable.
+        }
+    }
+
     public static void pln(Object message){
         System.out.println(message);
     }
@@ -95,26 +104,36 @@ public class Utility{
     }
 
     public static String substituteVariable(String expression, double value, boolean trigExpression) {
+        return substituteVariable(expression, value, trigExpression, 'x');
+    }
+
+    public static String substituteVariable(String expression, double value, boolean trigExpression, char variable) {
         String displayValue = formatNumber(value);
+        String variablePattern = Pattern.quote(String.valueOf(variable));
         String substituted = expression;
-        substituted = substituted.replaceAll("(?i)(sin|cos|tan|cot|sec|cosec|csc|asin|acos|atan)(\\^\\d+)?\\s*\\(?\\s*x\\s*\\)?",
+        substituted = substituted.replaceAll("(?i)(sin|cos|tan|cot|sec|cosec|csc|asin|acos|atan)(\\^\\d+)?\\s*\\(?\\s*" + variablePattern + "\\s*\\)?",
                 "$1$2(" + displayValue + (trigExpression ? "\u00b0" : "") + ")");
-        substituted = substituted.replaceAll("(?<![a-zA-Z])x(?![a-zA-Z])", "(" + displayValue + ")");
+        substituted = substituted.replaceAll("(?<![a-zA-Z])" + variablePattern + "(?![a-zA-Z])", "(" + displayValue + ")");
         return substituted;
     }
 
     public static String substituteVariableForEvaluation(String expression, double value) {
+        return substituteVariableForEvaluation(expression, value, 'x');
+    }
+
+    public static String substituteVariableForEvaluation(String expression, double value, char variable) {
         String displayValue = formatNumber(value);
+        String variablePattern = Pattern.quote(String.valueOf(variable));
         String substituted = expression;
-        substituted = substituted.replaceAll("(?i)(sin|cos|tan|cot|sec|cosec|csc|asin|acos|atan)(\\^\\d+)?\\s*\\(?\\s*x\\s*\\)?",
+        substituted = substituted.replaceAll("(?i)(sin|cos|tan|cot|sec|cosec|csc|asin|acos|atan)(\\^\\d+)?\\s*\\(?\\s*" + variablePattern + "\\s*\\)?",
                 "$1$2(" + formatAngleAsPi(value) + ")");
-        substituted = substituted.replaceAll("(?<![a-zA-Z])x(?![a-zA-Z])", "(" + displayValue + ")");
+        substituted = substituted.replaceAll("(?<![a-zA-Z])" + variablePattern + "(?![a-zA-Z])", "(" + displayValue + ")");
         return substituted;
     }
 
     public static void displayEvaluationSteps(String expression, double userValue) {
         boolean trigExpression = containsTrig(expression);
-        double evaluationValue = trigExpression ? Math.toRadians(userValue) : userValue;
+        String expressionForEvaluation = trigExpression ? expressionWithTrigArgumentsInRadians(expression, userValue) : expression;
         String substitutionStep = substituteVariable(expression, userValue, trigExpression);
         String evaluationSubstitutionStep = trigExpression ? substituteVariableForEvaluation(expression, userValue) : substitutionStep;
 
@@ -123,17 +142,119 @@ public class Utility{
             pln("=> " + evaluationSubstitutionStep);
         }
 
-        String partialStep = evaluateTopLevelParts(expression, evaluationValue);
+        String partialStep = evaluateTopLevelParts(expressionForEvaluation, userValue);
         if (!partialStep.isEmpty()) {
             pln("=> " + partialStep);
         }
 
         try {
-            DoubleUnaryOperator function = parseFunction(expression);
-            pln("=> " + formatNumber(function.applyAsDouble(evaluationValue)));
+            DoubleUnaryOperator function = parseFunction(expressionForEvaluation);
+            pln("=> " + formatNumber(function.applyAsDouble(userValue)));
         } catch (RuntimeException error) {
             pln("Unable to evaluate expression: " + error.getMessage());
         }
+    }
+
+    public static void displayEvaluationSteps(String expression, double userValue, char variable) {
+        boolean trigExpression = containsTrig(expression);
+        String substitutionStep = substituteVariable(expression, userValue, trigExpression, variable);
+        String evaluationSubstitutionStep = trigExpression ? substituteVariableForEvaluation(expression, userValue, variable) : substitutionStep;
+
+        pln("=> " + substitutionStep);
+        if (trigExpression && !evaluationSubstitutionStep.equals(substitutionStep)) {
+            pln("=> " + evaluationSubstitutionStep);
+        }
+
+        String simplified = simplifySymbolicSubstitution(evaluationSubstitutionStep);
+        if (!simplified.isEmpty() && !simplified.equals(evaluationSubstitutionStep)) {
+            pln("=> " + simplified);
+        }
+    }
+
+    public static String simplifySymbolicSubstitution(String expression) {
+        try {
+            return ChainRule.simplifyExpression(expression);
+        } catch (RuntimeException error) {
+            return "";
+        }
+    }
+
+    public static String expressionWithTrigArgumentsInRadians(String expression, double userValue) {
+        return expressionWithTrigArgumentsInRadians(expression, userValue, 'x');
+    }
+
+    public static String expressionWithTrigArgumentsInRadians(String expression, double userValue, char variable) {
+        Pattern pattern = Pattern.compile("(?i)(sin|cos|tan|cot|sec|cosec|csc|asin|acos|atan)(\\^\\d+)?\\s*\\(?\\s*x\\s*\\)?");
+        if (variable != 'x') {
+            pattern = Pattern.compile("(?i)(sin|cos|tan|cot|sec|cosec|csc|asin|acos|atan)(\\^\\d+)?\\s*\\(?\\s*" + Pattern.quote(String.valueOf(variable)) + "\\s*\\)?");
+        }
+        Matcher matcher = pattern.matcher(expression);
+        StringBuffer result = new StringBuffer();
+        String radians = formatNumber(Math.toRadians(userValue));
+        while (matcher.find()) {
+            String function = matcher.group(1);
+            String power = matcher.group(2) == null ? "" : matcher.group(2);
+            String replacement = function + "(" + radians + ")" + power;
+            matcher.appendReplacement(result, Matcher.quoteReplacement(replacement));
+        }
+        matcher.appendTail(result);
+        return result.toString();
+    }
+
+    public static List<Character> findVariables(String expression) {
+        LinkedHashSet<Character> variables = new LinkedHashSet<>();
+        if (expression == null) {
+            return new ArrayList<>(variables);
+        }
+
+        String value = ChainRule.normalizeSuperscripts(expression).toLowerCase();
+        for (int i = 0; i < value.length(); i++) {
+            int functionLength = functionNameLengthAt(value, i);
+            if (functionLength > 0) {
+                i += functionLength - 1;
+                continue;
+            }
+
+            char current = value.charAt(i);
+            if (Character.isLetter(current)) {
+                variables.add(current);
+            }
+        }
+        return new ArrayList<>(variables);
+    }
+
+    public static boolean containsVariable(List<Character> variables, char variable) {
+        for (char current : variables) {
+            if (Character.toLowerCase(current) == Character.toLowerCase(variable)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static String formatVariableList(List<Character> variables) {
+        StringBuilder result = new StringBuilder("(");
+        for (int i = 0; i < variables.size(); i++) {
+            if (i > 0) {
+                result.append(" , ");
+            }
+            result.append(variables.get(i));
+        }
+        result.append(")");
+        return result.toString();
+    }
+
+    private static int functionNameLengthAt(String expression, int index) {
+        String[] functions = {"cosec", "sqrt", "asin", "acos", "atan", "sin", "cos", "tan", "cot", "sec", "csc", "exp", "ln"};
+        for (String function : functions) {
+            if (expression.startsWith(function, index)) {
+                return function.length();
+            }
+        }
+        if (expression.startsWith("e^", index)) {
+            return 2;
+        }
+        return 0;
     }
 
     public static String evaluateTopLevelParts(String expression, double value) {
@@ -297,10 +418,11 @@ public class Utility{
 
             s = s.replaceAll("\\s+", "");
             s = s.replace("[", "(").replace("]", ")");
+            s = s.replaceAll("(?i)ln\\|([^|]+)\\|", "ln($1)");
             s = s.replace("|", "");
 
             // Constants
-            s = s.replaceAll("(?i)Ï€", "pi");
+            s = s.replace("\u00cf\u20ac", "pi");
             s = s.replace("\u03c0", "pi");
             s = s.replaceAll("(?i)cosec", "csc");
             s = wrapFunctionPower(s);

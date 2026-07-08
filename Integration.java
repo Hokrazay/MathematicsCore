@@ -56,13 +56,9 @@ public class Integration extends Utility {
             return;
         }
 
-        boolean trigExpression = containsTrig(integratedFunction);
-        double upperEvaluationValue = trigExpression ? Math.toRadians(upperLimit) : upperLimit;
-        double lowerEvaluationValue = trigExpression ? Math.toRadians(lowerLimit) : lowerLimit;
-
         try {
-            double upperResult = evaluateIntegral(integratedFunction, upperEvaluationValue);
-            double lowerResult = evaluateIntegral(integratedFunction, lowerEvaluationValue);
+            double upperResult = evaluateIntegral(integratedFunction, upperLimit);
+            double lowerResult = evaluateIntegral(integratedFunction, lowerLimit);
             double result = upperResult - lowerResult;
             displayLimitSteps(integratedFunction, upperLimit, lowerLimit, upperResult, lowerResult, result);
         } catch (RuntimeException error) {
@@ -71,7 +67,10 @@ public class Integration extends Utility {
     }
 
     public static double evaluateIntegral(String integratedFunction, double value) {
-        return parseFunction(integratedFunction).applyAsDouble(value);
+        String expressionForEvaluation = containsTrig(integratedFunction)
+                ? expressionWithTrigArgumentsInRadians(integratedFunction, value)
+                : integratedFunction;
+        return parseFunction(expressionForEvaluation).applyAsDouble(value);
     }
 
     public static void displayLimitSteps(String integratedFunction, double upperLimit, double lowerLimit,
@@ -91,10 +90,14 @@ public class Integration extends Utility {
             }
         }
 
-        String upperParts = evaluateTopLevelParts(integratedFunction,
-                trigExpression ? Math.toRadians(upperLimit) : upperLimit);
-        String lowerParts = evaluateTopLevelParts(integratedFunction,
-                trigExpression ? Math.toRadians(lowerLimit) : lowerLimit);
+        String upperExpressionForEvaluation = trigExpression
+                ? expressionWithTrigArgumentsInRadians(integratedFunction, upperLimit)
+                : integratedFunction;
+        String lowerExpressionForEvaluation = trigExpression
+                ? expressionWithTrigArgumentsInRadians(integratedFunction, lowerLimit)
+                : integratedFunction;
+        String upperParts = evaluateTopLevelParts(upperExpressionForEvaluation, upperLimit);
+        String lowerParts = evaluateTopLevelParts(lowerExpressionForEvaluation, lowerLimit);
         if (!upperParts.isEmpty() && !lowerParts.isEmpty()) {
             pln("=> " + upperParts + " - (" + lowerParts + ")");
         }
